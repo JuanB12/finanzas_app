@@ -17,4 +17,14 @@ class Quincena {
     required this.gastosFijos,
     required this.porcentajeAhorro,
   });
+
+  /// Lo que se separa para ahorrar apenas llega la quincena.
+  int get ahorro => ingresos * porcentajeAhorro ~/ 100;
+
+  /// La suma de todos los gastos fijos.
+  int get totalGastosFijos =>
+      gastosFijos.fold(0, (suma, gasto) => suma + gasto.monto);
+
+  /// Lo que queda para gastar después del ahorro y los gastos fijos.
+  int get disponible => ingresos - ahorro - totalGastosFijos;
 }
