@@ -147,4 +147,43 @@ void main() {
       expect(r.disponibleRestante, 290300);
     });
   });
+
+  group('Ritmo de gasto', () {
+    test('La quincena va del último pago al próximo', () {
+      final r = resumen([]);
+      expect(r.inicio, DateTime(2026, 10, 30));
+      expect(r.fin, DateTime(2026, 11, 13));
+      expect(r.diasQuincena, 14);
+    });
+
+    test('Sin gastos queda el 100% y vas bien', () {
+      final r = resumen([]);
+      expect(r.porcentajeRestante, 100);
+      expect(r.buenRitmo, isTrue);
+    });
+
+    test('Si queda menos plata que tiempo, vas rápido', () {
+      // quedan 3 de 14 días (21%) pero solo el 5% de la plata
+      final r = resumen([
+        Gasto(
+          descripcion: 'Viaje',
+          monto: 350000,
+          fecha: DateTime(2026, 11, 5),
+        ),
+      ]);
+      expect(r.porcentajeRestante, 5);
+      expect(r.buenRitmo, isFalse);
+    });
+
+    test('Si te pasaste, el porcentaje no baja de 0', () {
+      final r = resumen([
+        Gasto(
+          descripcion: 'Viaje',
+          monto: 400000,
+          fecha: DateTime(2026, 11, 5),
+        ),
+      ]);
+      expect(r.porcentajeRestante, 0);
+    });
+  });
 }

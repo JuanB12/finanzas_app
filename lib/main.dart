@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import 'screens/inicio_page.dart';
+import 'tema.dart';
 
 void main() {
   runApp(const FinanzasApp());
 }
-
-// Colores del diseño
-const verde = Color(0xFF006C49);
-const azulOscuro = Color(0xFF131B2E);
-const fondo = Color(0xFFF8F9FF);
 
 class FinanzasApp extends StatelessWidget {
   const FinanzasApp({super.key});
@@ -26,21 +23,9 @@ class FinanzasApp extends StatelessWidget {
           onSurface: azulOscuro,
         ),
         scaffoldBackgroundColor: fondo,
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(),
+        fontFamily: 'PlusJakartaSans',
       ),
       home: const InicioPage(),
-    );
-  }
-}
-
-class InicioPage extends StatelessWidget {
-  const InicioPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mis finanzas')),
-      body: const Center(child: Text('Aquí va tu quincena 💰')),
     );
   }
 }

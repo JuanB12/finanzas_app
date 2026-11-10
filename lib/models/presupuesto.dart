@@ -3,14 +3,22 @@ import 'gasto.dart';
 import 'quincena.dart';
 
 class ResumenDelDia {
+  final DateTime inicio;
+  final DateTime fin;
+  final int diasQuincena;
   final int diasRestantes;
+  final int disponibleQuincena;
   final int limiteHoy;
   final int gastadoHoy;
   final int apartado; // gastos programados de esta quincena
   final int disponibleRestante; // negativo si te pasaste
 
   const ResumenDelDia({
+    required this.inicio,
+    required this.fin,
+    required this.diasQuincena,
     required this.diasRestantes,
+    required this.disponibleQuincena,
     required this.limiteHoy,
     required this.gastadoHoy,
     required this.apartado,
@@ -18,6 +26,15 @@ class ResumenDelDia {
   });
 
   int get quedaHoy => limiteHoy - gastadoHoy;
+
+  int get porcentajeRestante {
+    if (disponibleQuincena <= 0 || disponibleRestante <= 0) return 0;
+    return disponibleRestante * 100 ~/ disponibleQuincena;
+  }
+
+  // Vas bien si te queda más plata que tiempo
+  bool get buenRitmo =>
+      disponibleRestante * diasQuincena >= diasRestantes * disponibleQuincena;
 }
 
 // Lo gastado hoy no mueve el límite de hoy, solo lo que te queda.
@@ -52,7 +69,11 @@ ResumenDelDia resumenDelDia({
   final paraRepartir = quincena.disponible - gastadoAntes - apartado;
 
   return ResumenDelDia(
+    inicio: inicio,
+    fin: fin,
+    diasQuincena: diasEntre(inicio, fin),
     diasRestantes: dias,
+    disponibleQuincena: quincena.disponible,
     limiteHoy: paraRepartir > 0 ? paraRepartir ~/ dias : 0,
     gastadoHoy: gastadoHoy,
     apartado: apartado,

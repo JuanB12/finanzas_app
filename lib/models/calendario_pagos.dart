@@ -50,9 +50,12 @@ DateTime proximoPago(DateTime hoy, {required Set<DateTime> festivos}) {
 
 // Cuenta hoy, no cuenta el día de pago
 int diasHastaPago(DateTime hoy, {required Set<DateTime> festivos}) {
-  final pago = proximoPago(hoy, festivos: festivos);
-  // En UTC para que un cambio de horario no dañe la resta
-  final desde = DateTime.utc(hoy.year, hoy.month, hoy.day);
-  final hasta = DateTime.utc(pago.year, pago.month, pago.day);
-  return hasta.difference(desde).inDays;
+  return diasEntre(hoy, proximoPago(hoy, festivos: festivos));
+}
+
+// En UTC para que un cambio de horario no dañe la resta
+int diasEntre(DateTime desde, DateTime hasta) {
+  final a = DateTime.utc(desde.year, desde.month, desde.day);
+  final b = DateTime.utc(hasta.year, hasta.month, hasta.day);
+  return b.difference(a).inDays;
 }
