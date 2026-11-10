@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:finanzas_app/models/calendario_pagos.dart';
+import 'package:finanzas_app/models/festivos_colombia.dart';
 
 // Reglas del calendario de pagos (Colombia, pago quincenal):
 // 1. Hoy cuenta como día para gastar.
@@ -60,6 +61,23 @@ void main() {
     );
   });
 
+  group('Último pago: dónde empezó la quincena', () {
+    test('A mitad de quincena, fue el fin del mes pasado', () {
+      final hoy = DateTime(2026, 11, 8); // el 31 oct. fue sábado: pagaron el 30
+      expect(pagoAnterior(hoy, festivos: {}), DateTime(2026, 10, 30));
+    });
+
+    test('El mismo día de pago, la quincena empieza hoy', () {
+      final hoy = DateTime(2026, 11, 13);
+      expect(pagoAnterior(hoy, festivos: {}), DateTime(2026, 11, 13));
+    });
+
+    test('Después del pago adelantado, la quincena empezó ese viernes', () {
+      final hoy = DateTime(2026, 11, 15); // domingo 15: pagaron el vie 13
+      expect(pagoAnterior(hoy, festivos: {}), DateTime(2026, 11, 13));
+    });
+  });
+
   group('Días para gastar hasta el pago (reglas 1 y 4)', () {
     test('Cuenta hoy, pero no el día de pago', () {
       final hoy = DateTime(2026, 11, 8); // pagan el vie 13: 8, 9, 10, 11 y 12
@@ -74,6 +92,24 @@ void main() {
     test('La hora del día no cambia la cuenta', () {
       final hoy = DateTime(2026, 11, 8, 23, 59); // casi medianoche
       expect(diasHastaPago(hoy, festivos: {}), 5);
+    });
+  });
+
+  group('Con los festivos reales de Colombia', () {
+    test('El 15 de junio de 2026 es lunes festivo: pagan el viernes 12', () {
+      final hoy = DateTime(2026, 6, 1);
+      expect(
+        proximoPago(hoy, festivos: festivosColombia(2026)),
+        DateTime(2026, 6, 12),
+      );
+    });
+
+    test('Un pago de diciembre mira también los festivos de enero', () {
+      final hoy = DateTime(2026, 12, 20);
+      expect(
+        proximoPago(hoy, festivos: festivosColombiaAlrededorDe(hoy)),
+        DateTime(2026, 12, 31),
+      );
     });
   });
 }
