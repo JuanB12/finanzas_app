@@ -2,6 +2,10 @@ import 'calendario_pagos.dart';
 import 'gasto.dart';
 import 'quincena.dart';
 
+enum EstadoHoy { bien, pasadoPeroVasBien, pasado }
+
+enum CualQuincena { pasada, actual, proxima }
+
 class ResumenDelDia {
   final DateTime inicio;
   final DateTime fin;
@@ -10,7 +14,7 @@ class ResumenDelDia {
   final int disponibleQuincena;
   final int limiteHoy;
   final int gastadoHoy;
-  final int apartado; // gastos programados de esta quincena
+  final int apartado; // programados y gastos de la quincena
   final int disponibleRestante; // negativo si te pasaste
 
   const ResumenDelDia({
@@ -32,13 +36,25 @@ class ResumenDelDia {
     return disponibleRestante * 100 ~/ disponibleQuincena;
   }
 
+  EstadoHoy get estadoHoy {
+    if (quedaHoy >= 0) return EstadoHoy.bien;
+    return buenRitmo ? EstadoHoy.pasadoPeroVasBien : EstadoHoy.pasado;
+  }
+
+  CualQuincena cualQuincena(DateTime fecha) {
+    final dia = soloFecha(fecha);
+    if (dia.isBefore(inicio)) return CualQuincena.pasada;
+    if (dia.isBefore(fin)) return CualQuincena.actual;
+    return CualQuincena.proxima;
+  }
+
   // Vas bien si te queda más plata que tiempo
   bool get buenRitmo =>
       disponibleRestante * diasQuincena >= diasRestantes * disponibleQuincena;
 }
 
 // Lo gastado hoy no mueve el límite de hoy, solo lo que te queda.
-// Los programados se apartan de toda la quincena, no del día.
+// Los programados y los de la quincena se apartan de toda la quincena, no del día.
 ResumenDelDia resumenDelDia({
   required Quincena quincena,
   required List<Gasto> gastos,
@@ -56,7 +72,7 @@ ResumenDelDia resumenDelDia({
     final fecha = soloFecha(gasto.fecha);
     if (fecha.isBefore(inicio) || !fecha.isBefore(fin)) continue;
 
-    if (gasto.programado || fecha.isAfter(dia)) {
+    if (gasto.programado || gasto.deQuincena || fecha.isAfter(dia)) {
       apartado += gasto.monto;
     } else if (fecha == dia) {
       gastadoHoy += gasto.monto;

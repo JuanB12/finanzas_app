@@ -1,4 +1,3 @@
-import 'models/gasto.dart';
 import 'models/quincena.dart';
 
 // Temporal: mientras no existan la pantalla de configuración y la base de datos
@@ -15,15 +14,3 @@ const quincenaEjemplo = Quincena(
   ],
   porcentajeAhorro: 10,
 );
-
-List<Gasto> gastosEjemplo() {
-  final hoy = DateTime.now();
-  return [
-    Gasto(
-      descripcion: 'Mercado',
-      monto: 48500,
-      fecha: hoy.subtract(const Duration(days: 1)),
-    ),
-    Gasto(descripcion: 'Café', monto: 6000, fecha: hoy),
-  ];
-}

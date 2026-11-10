@@ -186,4 +186,54 @@ void main() {
       expect(r.porcentajeRestante, 0);
     });
   });
+
+  group('Gastos de la quincena', () {
+    test('Un mercado de la quincena no se come el límite de hoy', () {
+      final r = resumen([
+        Gasto(
+          descripcion: 'Mercado',
+          monto: 160000,
+          fecha: hoy,
+          deQuincena: true,
+        ),
+      ]);
+      expect(r.gastadoHoy, 0);
+      expect(r.apartado, 160000);
+      expect(r.limiteHoy, 70100); // (370.300 - 160.000) / 3
+      expect(r.quedaHoy, 70100);
+    });
+  });
+
+  group('Cómo vas hoy', () {
+    test('Sin pasarte, vas bien', () {
+      expect(resumen([]).estadoHoy, EstadoHoy.bien);
+    });
+
+    test('Si te pasaste hoy pero la quincena va bien, no es tan grave', () {
+      final r = resumen([
+        Gasto(descripcion: 'Salida', monto: 130000, fecha: hoy),
+      ]);
+      expect(r.estadoHoy, EstadoHoy.pasadoPeroVasBien);
+    });
+
+    test('Si te pasaste hoy y vas rápido, sí es grave', () {
+      final r = resumen([
+        Gasto(
+          descripcion: 'Viaje',
+          monto: 300000,
+          fecha: DateTime(2026, 11, 5),
+        ),
+        Gasto(descripcion: 'Salida', monto: 30000, fecha: hoy),
+      ]);
+      expect(r.estadoHoy, EstadoHoy.pasado);
+    });
+  });
+
+  test('Sabe a qué quincena pertenece cada fecha', () {
+    final r = resumen([]); // quincena del 30 oct. al 12 nov.
+    expect(r.cualQuincena(DateTime(2026, 10, 29)), CualQuincena.pasada);
+    expect(r.cualQuincena(DateTime(2026, 10, 30)), CualQuincena.actual);
+    expect(r.cualQuincena(DateTime(2026, 11, 12, 23)), CualQuincena.actual);
+    expect(r.cualQuincena(DateTime(2026, 11, 13)), CualQuincena.proxima);
+  });
 }
