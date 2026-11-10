@@ -26,4 +26,14 @@ void main() {
     // 797.000 - 79.700 - 347.000
     expect(quincena.disponible, 370300);
   });
+
+  test('El límite diario reparte el disponible entre los días que faltan', () {
+    // 370.300 / 5 días = 74.060 exactos
+    expect(quincena.limiteDiario(5), 74060);
+  });
+
+  test('El límite diario redondea hacia abajo para no pasarse', () {
+    // 370.300 / 17 días = 21.782,35… → 21.782
+    expect(quincena.limiteDiario(17), 21782);
+  });
 }

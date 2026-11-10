@@ -27,4 +27,7 @@ class Quincena {
 
   /// Lo que queda para gastar después del ahorro y los gastos fijos.
   int get disponible => ingresos - ahorro - totalGastosFijos;
+
+  /// Cuánto se puede gastar por día. Redondea hacia abajo para no pasarse.
+  int limiteDiario(int diasRestantes) => disponible ~/ diasRestantes;
 }
