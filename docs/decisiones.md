@@ -31,3 +31,11 @@ Registro de las decisiones importantes: qué decidimos, por qué y qué descarta
 
 - La plata se guarda en `int` (pesos COP, sin decimales). Multimoneda: más adelante.
 - TDD: primero la prueba en rojo, después el código.
+
+## Pendientes (backlog)
+
+- **Días de pago configurables:** quincenal con cualquier par de días (15/30, 5/20, 10/25) y mensual. Se hace junto con la pantalla de configuración.
+- **Ingresos variables:** para independientes y freelancers. Necesita su propio debate.
+- **Destino de un ingreso extra:** al registrarlo, el usuario elige si va al colchón o a la quincena actual (en ese caso el límite se recalcula).
+- **Gastos programados:** un gasto con fecha futura dentro de la quincena debe apartarse desde ya, no ignorarse hasta ese día.
+- **Validar con usuarios reales:** preguntarles a 3 a 5 personas cómo les pagan y cómo controlan su plata.

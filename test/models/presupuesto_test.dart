@@ -86,4 +86,65 @@ void main() {
     expect(r.limiteHoy, 0);
     expect(r.disponibleRestante, -29700);
   });
+
+  group('Gastos programados', () {
+    final odontologo = Gasto(
+      descripcion: 'Odontólogo',
+      monto: 80000,
+      fecha: DateTime(2026, 11, 12),
+      programado: true,
+    );
+
+    test('Se apartan desde hoy y bajan el límite', () {
+      final r = resumen([odontologo]);
+      expect(r.apartado, 80000);
+      expect(r.limiteHoy, 96766); // (370.300 - 80.000) / 3
+    });
+
+    test('Un gasto con fecha futura se aparta aunque no esté marcado', () {
+      final r = resumen([
+        Gasto(descripcion: 'Taxi', monto: 80000, fecha: DateTime(2026, 11, 12)),
+      ]);
+      expect(r.limiteHoy, 96766);
+    });
+
+    test('Los de la próxima quincena no afectan esta', () {
+      final r = resumen([
+        Gasto(
+          descripcion: 'Arriendo',
+          monto: 500000,
+          fecha: DateTime(2026, 11, 20),
+          programado: true,
+        ),
+      ]);
+      expect(r.apartado, 0);
+      expect(r.limiteHoy, 123433);
+    });
+
+    test('El día del gasto no se descuenta dos veces', () {
+      final r = resumenDelDia(
+        quincena: quincena,
+        gastos: [odontologo],
+        hoy: DateTime(2026, 11, 12),
+        festivos: {},
+      );
+      expect(r.diasRestantes, 1);
+      expect(r.limiteHoy, 290300);
+      expect(r.gastadoHoy, 0);
+      expect(r.quedaHoy, 290300);
+    });
+
+    test('Uno que ya pasó tampoco se descuenta dos veces', () {
+      final r = resumen([
+        Gasto(
+          descripcion: 'Examen',
+          monto: 80000,
+          fecha: DateTime(2026, 11, 3),
+          programado: true,
+        ),
+      ]);
+      expect(r.limiteHoy, 96766);
+      expect(r.disponibleRestante, 290300);
+    });
+  });
 }
