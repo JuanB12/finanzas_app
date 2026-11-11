@@ -16,6 +16,7 @@ class Finanzas extends ChangeNotifier {
     this.ahora = DateTime.now,
     this._nombre = nombreInicial,
     this._quincena = quincenaInicial,
+    this._configurada = true,
   });
 
   final DateTime Function() ahora; // las pruebas pasan una fecha fija
@@ -27,6 +28,11 @@ class Finanzas extends ChangeNotifier {
   final List<IngresoExtra> _ingresosExtra = [];
 
   ThemeMode _modoTema = ThemeMode.system;
+
+  // Falso la primera vez que se abre la app: muestra la bienvenida.
+  // Mientras no haya base de datos arranca en verdadero con los datos de ejemplo
+  bool _configurada;
+  bool get configurada => _configurada;
 
   String get nombre => _nombre;
   ThemeMode get modoTema => _modoTema;
@@ -44,6 +50,13 @@ class Finanzas extends ChangeNotifier {
     hoy: ahora(),
     festivos: festivos,
   );
+
+  void terminarBienvenida({required String nombre, required Quincena plan}) {
+    _nombre = nombre;
+    _quincena = plan;
+    _configurada = true;
+    notifyListeners();
+  }
 
   void cambiarModoTema(ThemeMode modo) {
     _modoTema = modo;

@@ -347,4 +347,53 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(r'$135.150'), findsOneWidget);
   });
+
+  testWidgets('La primera vez, la bienvenida configura la app', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      FinanzasScope(
+        finanzas: Finanzas(ahora: () => hoy, configurada: false),
+        child: const FinanzasApp(),
+      ),
+    );
+    expect(find.text('Bienvenido a Mis finanzas'), findsOneWidget);
+
+    FilledButton siguiente() => tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Siguiente'),
+    );
+    expect(siguiente().onPressed, isNull); // sin nombre no avanza
+
+    await tester.enterText(find.byType(TextField), 'Camila');
+    await tester.pump();
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Mensual'));
+    await tester.pump();
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+
+    expect(siguiente().onPressed, isNull); // sin ingreso no avanza
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Ingreso mensual'),
+      '2000000',
+    );
+    await tester.pump();
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Siguiente')); // sin gastos fijos por ahora
+    await tester.pumpAndSettle();
+
+    // 2.000.000 - 10% ahorro - 5% imprevistos = 1.700.000 / 20 días
+    expect(find.text('Listo, Camila'), findsOneWidget);
+    expect(find.text(r'$85.000'), findsOneWidget);
+
+    await tester.tap(find.text('Empezar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hola, Camila'), findsOneWidget);
+    expect(find.text(r'$85.000'), findsOneWidget);
+    expect(find.textContaining('Mes · 30 oct al 29 nov'), findsOneWidget);
+  });
 }

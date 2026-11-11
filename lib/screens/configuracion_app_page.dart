@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../estado/finanzas.dart';
 import '../tema.dart';
+import 'bienvenida_page.dart';
 
 const versionApp = '1.0.0';
 
@@ -36,6 +37,23 @@ class ConfiguracionAppPage extends StatelessWidget {
       ),
     );
     if (modo != null) finanzas.cambiarModoTema(modo);
+  }
+
+  void _verBienvenida(BuildContext context) {
+    final finanzas = FinanzasScope.de(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (pagina) => BienvenidaPage(
+          ahora: finanzas.ahora,
+          onTerminar: (nombre, plan) {
+            finanzas.terminarBienvenida(nombre: nombre, plan: plan);
+            Navigator.popUntil(pagina, (ruta) => ruta.isFirst);
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _cambiarNombre(BuildContext context) async {
@@ -111,9 +129,15 @@ class ConfiguracionAppPage extends StatelessWidget {
               ),
             ],
           ),
-          const _Grupo(
+          _Grupo(
             titulo: 'La app',
             children: [
+              _Opcion(
+                icono: Icons.waving_hand_outlined,
+                titulo: 'Ver la bienvenida',
+                detalle: 'Configurar la app desde cero',
+                onTap: () => _verBienvenida(context),
+              ),
               _Opcion(
                 icono: Icons.info_outline_rounded,
                 titulo: 'Acerca de',

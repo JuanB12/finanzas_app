@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'estado/finanzas.dart';
 import 'screens/app_shell.dart';
+import 'screens/bienvenida_page.dart';
 import 'tema.dart';
 
 void main() {
@@ -14,6 +15,7 @@ class FinanzasApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final finanzas = FinanzasScope.de(context);
     return MaterialApp(
       title: 'Mis finanzas',
       debugShowCheckedModeBanner: false,
@@ -22,8 +24,14 @@ class FinanzasApp extends StatelessWidget {
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: temaClaro,
       darkTheme: temaOscuro,
-      themeMode: FinanzasScope.de(context).modoTema,
-      home: const AppShell(),
+      themeMode: finanzas.modoTema,
+      home: finanzas.configurada
+          ? const AppShell()
+          : BienvenidaPage(
+              ahora: finanzas.ahora,
+              onTerminar: (nombre, plan) =>
+                  finanzas.terminarBienvenida(nombre: nombre, plan: plan),
+            ),
     );
   }
 }

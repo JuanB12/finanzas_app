@@ -10,6 +10,7 @@ import '../models/quincena.dart';
 import '../tema.dart';
 import '../utils/formato.dart';
 import '../widgets/aviso_tope.dart';
+import '../widgets/campos_plan.dart';
 import '../widgets/categorias.dart';
 
 class MiPlanPage extends StatefulWidget {
@@ -122,7 +123,7 @@ class _MiPlanPageState extends State<MiPlanPage> {
   Future<void> _editarFijo([GastoFijo? actual]) async {
     final fijo = await showDialog<GastoFijo>(
       context: context,
-      builder: (_) => _GastoFijoDialog(inicial: actual, periodo: _periodo),
+      builder: (_) => GastoFijoDialog(inicial: actual, periodo: _periodo),
     );
     if (fijo == null) return;
     setState(() {
@@ -246,7 +247,7 @@ class _MiPlanPageState extends State<MiPlanPage> {
           Row(
             children: [
               Expanded(
-                child: _SelectorDia(
+                child: SelectorDia(
                   etiqueta: _quincenal ? 'Primer pago' : 'Día de pago',
                   valor: _primerDia,
                   onCambio: (d) => setState(() => _primerDia = d),
@@ -255,7 +256,7 @@ class _MiPlanPageState extends State<MiPlanPage> {
               if (_quincenal) ...[
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _SelectorDia(
+                  child: SelectorDia(
                     etiqueta: 'Segundo pago',
                     valor: _segundoDia,
                     onCambio: (d) => setState(() => _segundoDia = d),
@@ -272,7 +273,7 @@ class _MiPlanPageState extends State<MiPlanPage> {
             ),
           ),
           const _Seccion('Lo que separas apenas te pagan'),
-          _Porcentaje(
+          Porcentaje(
             icono: Icons.savings_outlined,
             titulo: 'Ahorro',
             valor: _ahorro,
@@ -280,7 +281,7 @@ class _MiPlanPageState extends State<MiPlanPage> {
             monto: q.ahorro,
             onCambio: (v) => setState(() => _ahorro = v),
           ),
-          _Porcentaje(
+          Porcentaje(
             icono: Icons.health_and_safety_outlined,
             titulo: 'Imprevistos',
             valor: _imprevistos,
@@ -305,7 +306,7 @@ class _MiPlanPageState extends State<MiPlanPage> {
                       onTap: () => _editarFijo(f),
                       title: Text(f.nombre),
                       subtitle: Text(
-                        '${formatoPesos(f.monto)} · ${f.diaCobro == null ? 'cada $_periodo' : 'se cobra el ${_textoDia(f.diaCobro!)}'}',
+                        '${formatoPesos(f.monto)} · ${f.diaCobro == null ? 'cada $_periodo' : 'se cobra el ${textoDia(f.diaCobro!)}'}',
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline_rounded),
@@ -411,96 +412,6 @@ class _Seccion extends StatelessWidget {
   }
 }
 
-class _SelectorDia extends StatelessWidget {
-  const _SelectorDia({
-    required this.etiqueta,
-    required this.valor,
-    required this.onCambio,
-  });
-
-  final String etiqueta;
-  final int valor;
-  final ValueChanged<int> onCambio;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<int>(
-      // La key hace que se redibuje si el valor cambia desde afuera
-      key: ValueKey('$etiqueta-$valor'),
-      initialValue: valor,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: etiqueta,
-        border: const OutlineInputBorder(),
-      ),
-      items: [
-        for (var d = 1; d <= ultimoDia; d++)
-          DropdownMenuItem(
-            value: d,
-            child: Text(d == ultimoDia ? 'Último día' : 'Día $d'),
-          ),
-      ],
-      onChanged: (d) {
-        if (d != null) onCambio(d);
-      },
-    );
-  }
-}
-
-class _Porcentaje extends StatelessWidget {
-  const _Porcentaje({
-    required this.icono,
-    required this.titulo,
-    required this.valor,
-    required this.maximo,
-    required this.monto,
-    required this.onCambio,
-  });
-
-  final IconData icono;
-  final String titulo;
-  final int valor;
-  final int maximo;
-  final int monto;
-  final ValueChanged<int> onCambio;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icono, size: 20, color: context.c.acento),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                titulo,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-            Text('$valor% · ${formatoPesos(monto)}'),
-          ],
-        ),
-        SliderTheme(
-          data: SliderTheme.of(context)
-              .copyWith(tickMarkShape: SliderTickMarkShape.noTickMark),
-          child: Slider(
-            value: valor.toDouble(),
-            max: maximo.toDouble(),
-            divisions: maximo,
-            activeColor: context.c.acento,
-            onChanged: (v) => onCambio(v.round()),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-String _textoDia(int dia) => dia == ultimoDia ? 'último día' : 'día $dia';
-
 class _Resumen extends StatelessWidget {
   const _Resumen({required this.quincena, required this.hoy});
 
@@ -576,114 +487,6 @@ class _Resumen extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-}
-
-class _GastoFijoDialog extends StatefulWidget {
-  const _GastoFijoDialog({required this.inicial, required this.periodo});
-
-  final GastoFijo? inicial;
-  final String periodo;
-
-  @override
-  State<_GastoFijoDialog> createState() => _GastoFijoDialogState();
-}
-
-class _GastoFijoDialogState extends State<_GastoFijoDialog> {
-  late final _nombre = TextEditingController(text: widget.inicial?.nombre);
-  late final _monto = TextEditingController(
-    text: widget.inicial == null ? null : formatoMiles(widget.inicial!.monto),
-  );
-  late bool _mensual =
-      widget.inicial == null || widget.inicial!.diaCobro != null;
-  late int _dia = widget.inicial?.diaCobro ?? 1;
-
-  @override
-  void dispose() {
-    _nombre.dispose();
-    _monto.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final monto = leerMonto(_monto.text);
-    final listo = _nombre.text.trim().isNotEmpty && monto > 0;
-
-    return AlertDialog(
-      title: Text(
-        widget.inicial == null ? 'Nuevo gasto fijo' : 'Editar gasto fijo',
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _nombre,
-              autofocus: widget.inicial == null,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Nombre'),
-              onChanged: (_) => setState(() {}),
-            ),
-            TextField(
-              controller: _monto,
-              keyboardType: TextInputType.number,
-              inputFormatters: const [MilesFormatter()],
-              decoration: InputDecoration(
-                labelText: 'Monto',
-                prefixText: r'$ ',
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '¿Cada cuánto se paga?',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<bool>(
-              segments: [
-                const ButtonSegment(value: true, label: Text('Cada mes')),
-                ButtonSegment(
-                  value: false,
-                  label: Text('Cada ${widget.periodo}'),
-                ),
-              ],
-              selected: {_mensual},
-              onSelectionChanged: (s) => setState(() => _mensual = s.first),
-            ),
-            if (_mensual) ...[
-              const SizedBox(height: 16),
-              _SelectorDia(
-                etiqueta: '¿Qué día te lo cobran?',
-                valor: _dia,
-                onCambio: (d) => setState(() => _dia = d),
-              ),
-            ],
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: listo
-              ? () => Navigator.pop(
-                  context,
-                  GastoFijo(
-                    nombre: _nombre.text.trim(),
-                    monto: monto,
-                    diaCobro: _mensual ? _dia : null,
-                  ),
-                )
-              : null,
-          child: Text(widget.inicial == null ? 'Agregar' : 'Guardar'),
-        ),
-      ],
     );
   }
 }
