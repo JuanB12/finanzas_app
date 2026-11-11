@@ -44,7 +44,7 @@ Registro de las decisiones importantes: qué decidimos, por qué y qué descarta
 - **Compras grandes del día:** un mercado quincenal registrado hoy pone "Hoy te pasaste" en rojo aunque el ritmo de la quincena vaya bien. Pensar en marcarlas como gasto de la quincena, no del día.
 - **Fondo de imprevistos:** un % de la quincena (lo configura el usuario, ej. 5%) para lo que no se planea: remedio del perro, una llanta. Al registrar un gasto se marca "Es un imprevisto" y sale del fondo, no del límite del día. Lo que sobra al final va al ahorro o al colchón. Hacerlo junto con la pantalla de configuración.
 - **Por comprar (captura rápida):** anotar en 3 segundos algo que hay que comprar, con un valor aproximado. La plata se aparta de una y después se convierte en el gasto real. Necesita la base de datos.
-- **Categorías propias:** hoy viven en memoria. Guardarlas cuando llegue la base de datos.
+- **Qué debe guardar la base de datos:** gastos, el plan (ingreso, forma de pago, ahorro, imprevistos, gastos fijos), las categorías propias, el nombre y la **apariencia** (claro/oscuro/automático). Hoy todo vuelve al valor inicial al cerrar la app; en el caso de la apariencia, vuelve a "Automático".
 - **Crecimiento de Inicio:** barra de navegación abajo (Inicio, Movimientos, Presupuesto, Análisis), con el toque de Liquid Glass ahí. En Inicio solo los últimos 5 movimientos + "Ver todos". En Movimientos, agrupar por día.
 - **Análisis:** en qué categorías se va la plata cada quincena.
 
@@ -63,6 +63,14 @@ Registro de las decisiones importantes: qué decidimos, por qué y qué descarta
 - **Decisión:** separar lo financiero de lo de la app. La pestaña **Mi plan** (💼) tiene ingreso, forma de pago, ahorro, imprevistos y gastos fijos. La **configuración de la app** (perfil, apariencia, notificaciones, moneda, acerca de) se abre desde el círculo con tu inicial o el ⚙️ en Inicio.
 - **Por qué:** son cosas distintas y se tocan con distinta frecuencia. Idea de Juan.
 - **A futuro:** las metas de ahorro y los topes por categoría van dentro de Mi plan, no en una quinta pestaña.
+
+## 2026-11-10 · Metas de ahorro y topes (próxima pantalla, dentro de Mi plan)
+
+- **Metas: "aparto X cada quincena"**, no "lo que sobre". El aporte a cada meta se separa apenas llega el pago, como el ahorro, y baja el disponible. Así la meta avanza sí o sí; lo que sobra casi nunca existe.
+- **Fecha estimada:** con el aporte por quincena, la app calcula cuándo llegarías ("en 5 quincenas, para el 15 de enero").
+- **Más adelante (con base de datos):** sumar a la meta lo que sobre al cerrar la quincena, como bonus.
+- **Topes por categoría:** un máximo por periodo (ej. Domicilios $80.000). En Registrar gasto se avisa desde el 80% del tope.
+- **El colchón** (prima, cesantías) se muestra en la misma pantalla.
 
 ## Orden acordado (2026-11-09)
 

@@ -58,7 +58,7 @@ class MovimientoTile extends StatelessWidget {
         ),
         subtitle: Text(
           _etiqueta(finanzas.resumen),
-          maxLines: 1,
+          maxLines: 2, // "De la quincena · Daviplata" no cabe en una línea
           overflow: TextOverflow.ellipsis,
         ),
         trailing: Column(
