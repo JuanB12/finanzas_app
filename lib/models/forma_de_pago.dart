@@ -20,6 +20,13 @@ class FormaDePago {
 
   List<int> get diasDePago => [primerDia, ?segundoDia];
 
-  String get nombrePeriodo =>
-      frecuencia == Frecuencia.quincenal ? 'Quincena' : 'Mes';
+  bool get _quincenal => frecuencia == Frecuencia.quincenal;
+
+  String get nombrePeriodo => _quincenal ? 'Quincena' : 'Mes';
+
+  // "quincena" es femenino y "mes" masculino
+  String get este => _quincenal ? 'Esta quincena' : 'Este mes';
+  String get proximo => _quincenal ? 'Próxima quincena' : 'Próximo mes';
+  String get elPeriodo => _quincenal ? 'la quincena' : 'el mes';
+  String get todoElPeriodo => _quincenal ? 'toda la quincena' : 'todo el mes';
 }

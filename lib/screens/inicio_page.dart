@@ -1,178 +1,95 @@
 import 'package:flutter/material.dart';
 
-import '../datos_ejemplo.dart';
-import '../models/festivos_colombia.dart';
-import '../models/gasto.dart';
+import '../estado/finanzas.dart';
+import '../models/forma_de_pago.dart';
 import '../models/presupuesto.dart';
-import '../models/quincena.dart';
 import '../tema.dart';
 import '../utils/formato.dart';
-import '../widgets/categorias.dart';
-import 'configuracion_page.dart';
-import 'registrar_gasto_page.dart';
+import '../widgets/movimiento_tile.dart';
+import 'configuracion_app_page.dart';
 
-class InicioPage extends StatefulWidget {
-  const InicioPage({super.key, this.ahora = DateTime.now});
+class InicioPage extends StatelessWidget {
+  const InicioPage({super.key, required this.onVerTodos});
 
-  // Las pruebas pasan un reloj con fecha fija
-  final DateTime Function() ahora;
-
-  @override
-  State<InicioPage> createState() => _InicioPageState();
-}
-
-class _InicioPageState extends State<InicioPage> {
-  // Por ahora en memoria: se pierden al cerrar la app
-  final List<Gasto> _gastos = [];
-  final List<Categoria> _categoriasPropias = [];
-  String _nombre = nombreInicial;
-  Quincena _quincena = quincenaInicial;
-
-  Future<void> _abrirConfiguracion() async {
-    final config = await Navigator.push<Configuracion>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ConfiguracionPage(
-          inicial: (nombre: _nombre, quincena: _quincena),
-          ahora: widget.ahora,
-        ),
-      ),
-    );
-    if (config == null || !mounted) return;
-    setState(() {
-      _nombre = config.nombre;
-      _quincena = config.quincena;
-    });
-  }
-
-  Future<void> _abrirRegistro({Gasto? editar}) async {
-    final gasto = await Navigator.push<Gasto>(
-      context,
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => RegistrarGastoPage(
-          // Al editar, la vista previa no debe contar el gasto dos veces
-          gastos: [
-            for (final g in _gastos)
-              if (!identical(g, editar)) g,
-          ],
-          quincena: _quincena,
-          ahora: widget.ahora,
-          categoriasPropias: _categoriasPropias,
-          onNuevaCategoria: _categoriasPropias.add,
-          inicial: editar,
-        ),
-      ),
-    );
-    if (gasto == null || !mounted) return;
-
-    setState(() {
-      if (editar == null) {
-        _gastos.add(gasto);
-      } else {
-        _gastos[_gastos.indexOf(editar)] = gasto;
-      }
-    });
-  }
-
-  void _borrar(Gasto gasto) {
-    final posicion = _gastos.indexOf(gasto);
-    setState(() => _gastos.removeAt(posicion));
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('Borraste ${gasto.descripcion}'),
-          action: SnackBarAction(
-            label: 'Deshacer',
-            onPressed: () => setState(() => _gastos.insert(posicion, gasto)),
-          ),
-        ),
-      );
-  }
+  final VoidCallback onVerTodos;
 
   @override
   Widget build(BuildContext context) {
-    final hoy = widget.ahora();
-    final resumen = resumenDelDia(
-      quincena: _quincena,
-      gastos: _gastos,
-      hoy: hoy,
-      festivos: festivosColombiaAlrededorDe(hoy),
-    );
+    final finanzas = FinanzasScope.de(context);
 
-    return Scaffold(
-      // Fijo abajo: siempre a la mano, aunque haya muchos movimientos
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-          child: _BotonAgregarGasto(onPressed: _abrirRegistro),
-        ),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            _Encabezado(nombre: _nombre, onConfigurar: _abrirConfiguracion),
-            const SizedBox(height: 20),
-            _TarjetaQuincena(
-              resumen: resumen,
-              periodo: _quincena.formaDePago.nombrePeriodo,
-            ),
-            const SizedBox(height: 28),
-            _UltimosMovimientos(
-              gastos: _gastos,
-              categoriasPropias: _categoriasPropias,
-              resumen: resumen,
-              onEditar: (g) => _abrirRegistro(editar: g),
-              onBorrar: _borrar,
-            ),
-          ],
-        ),
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          _Encabezado(nombre: finanzas.nombre),
+          const SizedBox(height: 20),
+          _TarjetaQuincena(
+            resumen: finanzas.resumen,
+            forma: finanzas.quincena.formaDePago,
+          ),
+          const SizedBox(height: 28),
+          _UltimosMovimientos(onVerTodos: onVerTodos),
+        ],
       ),
     );
   }
 }
 
 class _Encabezado extends StatelessWidget {
-  const _Encabezado({required this.nombre, required this.onConfigurar});
+  const _Encabezado({required this.nombre});
 
   final String nombre;
-  final VoidCallback onConfigurar;
+
+  void _abrirConfiguracion(BuildContext context) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const ConfiguracionAppPage()),
+  );
 
   @override
   Widget build(BuildContext context) {
     final textos = Theme.of(context).textTheme;
     return Row(
       children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: verde,
-          child: Text(
-            nombre[0].toUpperCase(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+        Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => _abrirConfiguracion(context),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: verde,
+                  child: Text(
+                    nombre[0].toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Bienvenido', style: textos.bodySmall),
+                      Text(
+                        'Hola, $nombre',
+                        overflow: TextOverflow.ellipsis,
+                        style: textos.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Bienvenido', style: textos.bodySmall),
-              Text(
-                'Hola, $nombre',
-                style: textos.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
         IconButton(
-          onPressed: onConfigurar,
-          tooltip: 'Configuración',
+          tooltip: 'Configuración de la app',
+          onPressed: () => _abrirConfiguracion(context),
           icon: const Icon(Icons.settings_outlined),
         ),
       ],
@@ -181,10 +98,10 @@ class _Encabezado extends StatelessWidget {
 }
 
 class _TarjetaQuincena extends StatelessWidget {
-  const _TarjetaQuincena({required this.resumen, required this.periodo});
+  const _TarjetaQuincena({required this.resumen, required this.forma});
 
   final ResumenDelDia resumen;
-  final String periodo;
+  final FormaDePago forma;
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +153,7 @@ class _TarjetaQuincena extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$periodo · ${fechaCorta(r.inicio)} al ${fechaCorta(ultimoDia)}',
+                        '${forma.nombrePeriodo} · ${fechaCorta(r.inicio)} al ${fechaCorta(ultimoDia)}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white70,
@@ -271,7 +188,7 @@ class _TarjetaQuincena extends StatelessWidget {
             if (r.apartado > 0) ...[
               const SizedBox(height: 10),
               Text(
-                'Apartado para la ${periodo.toLowerCase()}: ${formatoPesos(r.apartado)}',
+                'Apartado para ${forma.elPeriodo}: ${formatoPesos(r.apartado)}',
                 style: const TextStyle(fontSize: 12, color: Colors.white70),
               ),
             ],
@@ -315,79 +232,33 @@ class _Ritmo extends StatelessWidget {
   }
 }
 
-class _BotonAgregarGasto extends StatelessWidget {
-  const _BotonAgregarGasto({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton(
-      onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: Colors.black,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: verdeClaro,
-            child: Icon(Icons.add, color: azulOscuro),
-          ),
-          SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              'Agregar gasto',
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _UltimosMovimientos extends StatelessWidget {
-  const _UltimosMovimientos({
-    required this.gastos,
-    required this.categoriasPropias,
-    required this.resumen,
-    required this.onEditar,
-    required this.onBorrar,
-  });
+  const _UltimosMovimientos({required this.onVerTodos});
 
-  final List<Gasto> gastos;
-  final List<Categoria> categoriasPropias;
-  final ResumenDelDia resumen;
-  final ValueChanged<Gasto> onEditar;
-  final ValueChanged<Gasto> onBorrar;
-
-  String _etiqueta(Gasto g) {
-    final cual = switch (resumen.cualQuincena(g.fecha)) {
-      CualQuincena.pasada => 'Quincena pasada',
-      CualQuincena.proxima => 'Próxima quincena',
-      CualQuincena.actual when g.imprevisto => '🛟 Imprevisto',
-      CualQuincena.actual when g.programado => 'Programado',
-      CualQuincena.actual when g.deQuincena => 'De la quincena',
-      CualQuincena.actual => null,
-    };
-    return [?cual, g.medioPago.nombre].join(' · ');
-  }
+  final VoidCallback onVerTodos;
 
   @override
   Widget build(BuildContext context) {
-    final recientes = gastos.reversed.toList();
+    final gastos = FinanzasScope.de(context).gastos;
+    final recientes = gastos.reversed.take(5).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Últimos movimientos',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Últimos movimientos',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+            ),
+            if (gastos.isNotEmpty)
+              TextButton(
+                onPressed: onVerTodos,
+                child: Text('Ver todos (${gastos.length}) →'),
+              ),
+          ],
         ),
         if (recientes.isNotEmpty)
           const Text(
@@ -411,62 +282,7 @@ class _UltimosMovimientos extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             clipBehavior: Clip.antiAlias,
             child: Column(
-              children: [
-                for (final g in recientes)
-                  Dismissible(
-                    key: ObjectKey(g),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (_) => onBorrar(g),
-                    background: Container(
-                      color: Colors.red.shade400,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 24),
-                      child: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
-                    child: ListTile(
-                      onTap: () => onEditar(g),
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFFE3EBFF),
-                        child: Icon(
-                          iconoDe(g.descripcion, categoriasPropias),
-                          color: azulOscuro,
-                        ),
-                      ),
-                      title: Text(
-                        g.descripcion,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        _etiqueta(g),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '-${formatoPesos(g.monto)}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          Text(
-                            fechaCorta(g.fecha),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
+              children: [for (final g in recientes) MovimientoTile(gasto: g)],
             ),
           ),
       ],

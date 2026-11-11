@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'screens/inicio_page.dart';
+import 'estado/finanzas.dart';
+import 'screens/app_shell.dart';
 import 'tema.dart';
 
 void main() {
-  runApp(const FinanzasApp());
+  runApp(FinanzasScope(finanzas: Finanzas(), child: const FinanzasApp()));
 }
 
 class FinanzasApp extends StatelessWidget {
@@ -29,7 +30,7 @@ class FinanzasApp extends StatelessWidget {
         scaffoldBackgroundColor: fondo,
         fontFamily: 'PlusJakartaSans',
       ),
-      home: const InicioPage(),
+      home: const AppShell(),
     );
   }
 }

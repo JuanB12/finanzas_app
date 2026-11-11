@@ -7,38 +7,56 @@ import '../models/quincena.dart';
 import '../tema.dart';
 import '../utils/formato.dart';
 
-typedef Configuracion = ({String nombre, Quincena quincena});
-
-class ConfiguracionPage extends StatefulWidget {
-  const ConfiguracionPage({
+class MiPlanPage extends StatefulWidget {
+  const MiPlanPage({
     super.key,
     required this.inicial,
+    required this.onGuardar,
     this.ahora = DateTime.now,
   });
 
-  final Configuracion inicial;
+  final Quincena inicial;
+  final ValueChanged<Quincena> onGuardar;
   final DateTime Function() ahora;
 
   @override
-  State<ConfiguracionPage> createState() => _ConfiguracionPageState();
+  State<MiPlanPage> createState() => _MiPlanPageState();
 }
 
-class _ConfiguracionPageState extends State<ConfiguracionPage> {
-  late final _nombre = TextEditingController(text: widget.inicial.nombre);
-  late final _ingresos = TextEditingController(
-    text: formatoMiles(widget.inicial.quincena.ingresos),
-  );
-  late Frecuencia _frecuencia = widget.inicial.quincena.formaDePago.frecuencia;
-  late int _primerDia = widget.inicial.quincena.formaDePago.primerDia;
-  late int _segundoDia =
-      widget.inicial.quincena.formaDePago.segundoDia ?? ultimoDia;
-  late int _ahorro = widget.inicial.quincena.porcentajeAhorro;
-  late int _imprevistos = widget.inicial.quincena.porcentajeImprevistos;
-  late final List<GastoFijo> _fijos = [...widget.inicial.quincena.gastosFijos];
+class _MiPlanPageState extends State<MiPlanPage> {
+  final _ingresos = TextEditingController();
+  late Frecuencia _frecuencia;
+  late int _primerDia;
+  late int _segundoDia;
+  late int _ahorro;
+  late int _imprevistos;
+  late List<GastoFijo> _fijos;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar(widget.inicial);
+  }
+
+  // Si la configuración guardada cambia y aquí no hay nada pendiente, se recarga
+  @override
+  void didUpdateWidget(MiPlanPage viejo) {
+    super.didUpdateWidget(viejo);
+    if (!_cambioRespectoA(viejo.inicial)) _cargar(widget.inicial);
+  }
+
+  void _cargar(Quincena q) {
+    _ingresos.text = formatoMiles(q.ingresos);
+    _frecuencia = q.formaDePago.frecuencia;
+    _primerDia = q.formaDePago.primerDia;
+    _segundoDia = q.formaDePago.segundoDia ?? ultimoDia;
+    _ahorro = q.porcentajeAhorro;
+    _imprevistos = q.porcentajeImprevistos;
+    _fijos = [...q.gastosFijos];
+  }
 
   @override
   void dispose() {
-    _nombre.dispose();
     _ingresos.dispose();
     super.dispose();
   }
@@ -56,8 +74,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   );
 
   // Una "huella" de la configuración para saber si algo cambió
-  String _huella(String nombre, Quincena q) => [
-    nombre,
+  String _huella(Quincena q) => [
     q.ingresos,
     q.formaDePago.frecuencia,
     q.formaDePago.primerDia,
@@ -67,34 +84,20 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
     for (final f in q.gastosFijos) '${f.nombre}:${f.monto}:${f.diaCobro}',
   ].join('|');
 
-  bool get _hayCambios =>
-      _huella(_nombre.text.trim(), _quincena) !=
-      _huella(widget.inicial.nombre, widget.inicial.quincena);
+  bool _cambioRespectoA(Quincena q) => _huella(_quincena) != _huella(q);
 
-  Future<void> _confirmarSalida() async {
-    final descartar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Descartar los cambios?'),
-        content: const Text('Si sales ahora, se pierde lo que cambiaste.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Seguir editando'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Descartar'),
-          ),
-        ],
-      ),
-    );
-    if (descartar == true && mounted) Navigator.pop(context);
+  bool get _hayCambios => _cambioRespectoA(widget.inicial);
+
+  void _guardar() {
+    widget.onGuardar(_quincena);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Guardado ✓')));
   }
 
+  void _descartar() => setState(() => _cargar(widget.inicial));
+
   String? get _error {
-    if (_nombre.text.trim().isEmpty) return 'Escribe tu nombre';
     if ((leerMonto(_ingresos.text)) <= 0) return 'Escribe tu ingreso';
     if (_quincenal && _primerDia >= _segundoDia) {
       return 'El primer día de pago debe ir antes que el segundo';
@@ -124,151 +127,154 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
     final q = _quincena;
     final error = _error;
 
-    return PopScope(
-      canPop: !_hayCambios,
-      onPopInvokedWithResult: (salio, _) {
-        if (!salio) _confirmarSalida();
-      },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Tu configuración')),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          children: [
-            TextField(
-              controller: _nombre,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Tu nombre',
-                border: OutlineInputBorder(),
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        children: [
+          const Text(
+            'Mi plan',
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          if (_hayCambios)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF4E0),
+                borderRadius: BorderRadius.circular(14),
               ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const _Seccion('¿Cómo te pagan?'),
-            SegmentedButton<Frecuencia>(
-              segments: const [
-                ButtonSegment(
-                  value: Frecuencia.quincenal,
-                  label: Text('Quincenal'),
-                ),
-                ButtonSegment(
-                  value: Frecuencia.mensual,
-                  label: Text('Mensual'),
-                ),
-              ],
-              selected: {_frecuencia},
-              onSelectionChanged: (s) => setState(() {
-                _frecuencia = s.first;
-                // Valores típicos al cambiar
-                _primerDia = _quincenal ? 15 : ultimoDia;
-                _segundoDia = ultimoDia;
-              }),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _ingresos,
-              keyboardType: TextInputType.number,
-              inputFormatters: const [MilesFormatter()],
-              decoration: InputDecoration(
-                labelText: _quincenal
-                    ? 'Ingreso por quincena'
-                    : 'Ingreso mensual',
-                prefixText: r'$ ',
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const _Seccion('Días de pago'),
-            Row(
-              children: [
-                Expanded(
-                  child: _SelectorDia(
-                    etiqueta: _quincenal ? 'Primer pago' : 'Día de pago',
-                    valor: _primerDia,
-                    onCambio: (d) => setState(() => _primerDia = d),
-                  ),
-                ),
-                if (_quincenal) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _SelectorDia(
-                      etiqueta: 'Segundo pago',
-                      valor: _segundoDia,
-                      onCambio: (d) => setState(() => _segundoDia = d),
-                    ),
+              child: Row(
+                children: [
+                  const Expanded(child: Text('Tienes cambios sin guardar')),
+                  TextButton(
+                    onPressed: _descartar,
+                    child: const Text('Descartar'),
                   ),
                 ],
-              ],
-            ),
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: Text(
-                'Si cae fin de semana o festivo, la app cuenta el día hábil anterior.',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
-            const _Seccion('Lo que separas apenas te pagan'),
-            _Porcentaje(
-              icono: Icons.savings_outlined,
-              titulo: 'Ahorro',
-              valor: _ahorro,
-              maximo: 50,
-              monto: q.ahorro,
-              onCambio: (v) => setState(() => _ahorro = v),
+          const Text(
+            'Cuánto te entra, qué sale fijo y cuánto separas',
+            style: TextStyle(color: Colors.black54),
+          ),
+          const _Seccion('¿Cómo te pagan?'),
+          SegmentedButton<Frecuencia>(
+            segments: const [
+              ButtonSegment(
+                value: Frecuencia.quincenal,
+                label: Text('Quincenal'),
+              ),
+              ButtonSegment(value: Frecuencia.mensual, label: Text('Mensual')),
+            ],
+            selected: {_frecuencia},
+            onSelectionChanged: (s) => setState(() {
+              _frecuencia = s.first;
+              // Valores típicos al cambiar
+              _primerDia = _quincenal ? 15 : ultimoDia;
+              _segundoDia = ultimoDia;
+            }),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _ingresos,
+            keyboardType: TextInputType.number,
+            inputFormatters: const [MilesFormatter()],
+            decoration: InputDecoration(
+              labelText: _quincenal
+                  ? 'Ingreso por quincena'
+                  : 'Ingreso mensual',
+              prefixText: r'$ ',
+              border: const OutlineInputBorder(),
             ),
-            _Porcentaje(
-              icono: Icons.health_and_safety_outlined,
-              titulo: 'Imprevistos',
-              valor: _imprevistos,
-              maximo: 20,
-              monto: q.fondoImprevistos,
-              onCambio: (v) => setState(() => _imprevistos = v),
-            ),
-            const _Seccion('Gastos fijos'),
-            const Text(
-              'Toca uno para editarlo',
+            onChanged: (_) => setState(() {}),
+          ),
+          const _Seccion('Días de pago'),
+          Row(
+            children: [
+              Expanded(
+                child: _SelectorDia(
+                  etiqueta: _quincenal ? 'Primer pago' : 'Día de pago',
+                  valor: _primerDia,
+                  onCambio: (d) => setState(() => _primerDia = d),
+                ),
+              ),
+              if (_quincenal) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _SelectorDia(
+                    etiqueta: 'Segundo pago',
+                    valor: _segundoDia,
+                    onCambio: (d) => setState(() => _segundoDia = d),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              'Si cae fin de semana o festivo, la app cuenta el día hábil anterior.',
               style: TextStyle(fontSize: 12, color: Colors.black54),
             ),
-            for (final f in _fijos)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                onTap: () => _editarFijo(f),
-                title: Text(f.nombre),
-                subtitle: Text(
-                  '${formatoPesos(f.monto)} · ${f.diaCobro == null ? 'cada $_periodo' : 'se cobra el ${_textoDia(f.diaCobro!)}'}',
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  onPressed: () => setState(() => _fijos.remove(f)),
-                ),
+          ),
+          const _Seccion('Lo que separas apenas te pagan'),
+          _Porcentaje(
+            icono: Icons.savings_outlined,
+            titulo: 'Ahorro',
+            valor: _ahorro,
+            maximo: 50,
+            monto: q.ahorro,
+            onCambio: (v) => setState(() => _ahorro = v),
+          ),
+          _Porcentaje(
+            icono: Icons.health_and_safety_outlined,
+            titulo: 'Imprevistos',
+            valor: _imprevistos,
+            maximo: 20,
+            monto: q.fondoImprevistos,
+            onCambio: (v) => setState(() => _imprevistos = v),
+          ),
+          const _Seccion('Gastos fijos'),
+          const Text(
+            'Toca uno para editarlo',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          for (final f in _fijos)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              onTap: () => _editarFijo(f),
+              title: Text(f.nombre),
+              subtitle: Text(
+                '${formatoPesos(f.monto)} · ${f.diaCobro == null ? 'cada $_periodo' : 'se cobra el ${_textoDia(f.diaCobro!)}'}',
               ),
-            TextButton.icon(
-              onPressed: _editarFijo,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Agregar gasto fijo'),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline_rounded),
+                onPressed: () => setState(() => _fijos.remove(f)),
+              ),
             ),
-            const SizedBox(height: 16),
-            _Resumen(quincena: q, hoy: widget.ahora()),
-            const SizedBox(height: 16),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(error, style: const TextStyle(color: Colors.red)),
-              ),
-            FilledButton(
-              onPressed: error != null
-                  ? null
-                  : () => Navigator.pop<Configuracion>(context, (
-                      nombre: _nombre.text.trim(),
-                      quincena: q,
-                    )),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text('Guardar'),
+          TextButton.icon(
+            onPressed: _editarFijo,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Agregar gasto fijo'),
+          ),
+          const SizedBox(height: 16),
+          _Resumen(quincena: q, hoy: widget.ahora()),
+          const SizedBox(height: 16),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(error, style: const TextStyle(color: Colors.red)),
             ),
-          ],
-        ),
+          FilledButton(
+            onPressed: error != null || !_hayCambios ? null : _guardar,
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: const Text('Guardar'),
+          ),
+        ],
       ),
     );
   }
@@ -390,7 +396,7 @@ class _Resumen extends StatelessWidget {
       hoy: hoy,
       festivos: festivosColombiaAlrededorDe(hoy),
     );
-    final nombre = quincena.formaDePago.nombrePeriodo.toLowerCase();
+    final forma = quincena.formaDePago;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -415,7 +421,7 @@ class _Resumen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${i == 0 ? 'Esta' : 'Próxima'} $nombre · ${fechaCorta(p.inicio)} al ${fechaCorta(p.fin.subtract(const Duration(days: 1)))}',
+                        '${i == 0 ? forma.este : forma.proximo} · ${fechaCorta(p.inicio)} al ${fechaCorta(p.fin.subtract(const Duration(days: 1)))}',
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,

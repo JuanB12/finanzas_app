@@ -48,3 +48,14 @@ const _meses = [
 ];
 
 String fechaCorta(DateTime fecha) => '${fecha.day} ${_meses[fecha.month - 1]}';
+
+const _diasSemana = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+
+String nombreDelDia(DateTime dia, DateTime hoy) {
+  final d = DateTime(dia.year, dia.month, dia.day);
+  final h = DateTime(hoy.year, hoy.month, hoy.day);
+  if (d == h) return 'Hoy';
+  if (d == DateTime(h.year, h.month, h.day - 1)) return 'Ayer';
+  if (d == DateTime(h.year, h.month, h.day + 1)) return 'Mañana';
+  return '${_diasSemana[d.weekday - 1]} ${fechaCorta(d)}';
+}

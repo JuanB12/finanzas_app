@@ -58,6 +58,12 @@ Registro de las decisiones importantes: qué decidimos, por qué y qué descarta
 - **Selector quincenal/mensual:** botón segmentado, no checklist ni combobox (son solo 2 opciones excluyentes). Los días sí van en lista desplegable.
 - **Imprevistos:** un % del ingreso que se separa como el ahorro. Un gasto marcado como imprevisto sale primero del fondo. Si no alcanza, lo que falta se reparte en el periodo.
 
+## 2026-11-10 · Mi plan vs. configuración de la app
+
+- **Decisión:** separar lo financiero de lo de la app. La pestaña **Mi plan** (💼) tiene ingreso, forma de pago, ahorro, imprevistos y gastos fijos. La **configuración de la app** (perfil, apariencia, notificaciones, moneda, acerca de) se abre desde el círculo con tu inicial o el ⚙️ en Inicio.
+- **Por qué:** son cosas distintas y se tocan con distinta frecuencia. Idea de Juan.
+- **A futuro:** las metas de ahorro y los topes por categoría van dentro de Mi plan, no en una quinta pestaña.
+
 ## Orden acordado (2026-11-09)
 
 1. Configuración de la quincena + fondo de imprevistos

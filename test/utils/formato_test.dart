@@ -51,4 +51,12 @@ void main() {
       expect(leerMonto(''), 0);
     });
   });
+
+  test('Nombre del día para agrupar movimientos', () {
+    final hoy = DateTime(2026, 11, 10, 9);
+    expect(nombreDelDia(DateTime(2026, 11, 10), hoy), 'Hoy');
+    expect(nombreDelDia(DateTime(2026, 11, 9), hoy), 'Ayer');
+    expect(nombreDelDia(DateTime(2026, 11, 11), hoy), 'Mañana');
+    expect(nombreDelDia(DateTime(2026, 11, 8), hoy), 'dom 8 nov');
+  });
 }

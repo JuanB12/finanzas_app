@@ -1,4 +1,5 @@
-import 'package:finanzas_app/screens/inicio_page.dart';
+import 'package:finanzas_app/estado/finanzas.dart';
+import 'package:finanzas_app/screens/app_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,11 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 // Disponible: 797.000 - 79.700 - 39.850 - 272.000 = 405.450 → $135.150 por día
 final hoy = DateTime(2026, 11, 10, 10);
 
-Widget app() => MaterialApp(
-  locale: const Locale('es'),
-  supportedLocales: const [Locale('es')],
-  localizationsDelegates: GlobalMaterialLocalizations.delegates,
-  home: InicioPage(ahora: () => hoy),
+Widget app() => FinanzasScope(
+  finanzas: Finanzas(ahora: () => hoy),
+  child: MaterialApp(
+    locale: const Locale('es'),
+    supportedLocales: const [Locale('es')],
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    home: const AppShell(),
+  ),
 );
 
 Future<void> abrir(WidgetTester tester) async {
@@ -40,7 +44,7 @@ Future<void> registrarGasto(
   List<String> teclas, {
   bool imprevisto = false,
 }) async {
-  await tester.tap(find.text('Agregar gasto'));
+  await tester.tap(find.byTooltip('Agregar gasto'));
   await tester.pumpAndSettle();
   for (final t in teclas) {
     await verYTocar(tester, find.byKey(ValueKey('tecla-$t')));
@@ -94,19 +98,21 @@ void main() {
 
   testWidgets('Cambiar a pago mensual cambia el periodo', (tester) async {
     await abrir(tester);
-    await tester.tap(find.byTooltip('Configuración'));
+    await tester.tap(find.text('Mi plan'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Mensual'));
     await tester.pumpAndSettle();
     await verYTocar(tester, find.text('Guardar'));
+    await tester.tap(find.text('Inicio'));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Mes · 30 oct al 29 nov'), findsOneWidget);
   });
 
   testWidgets('No deja guardar sin ingreso', (tester) async {
     await abrir(tester);
-    await tester.tap(find.byTooltip('Configuración'));
+    await tester.tap(find.text('Mi plan'));
     await tester.pumpAndSettle();
 
     await tester.enterText(
@@ -127,52 +133,120 @@ void main() {
     expect(guardar.onPressed, isNull);
   });
 
-  testWidgets('Salir de ⚙️ con cambios pregunta antes de descartar', (
+  testWidgets('Mi plan avisa los cambios sin guardar y deja descartarlos', (
     tester,
   ) async {
     await abrir(tester);
-    await tester.tap(find.byTooltip('Configuración'));
+    await tester.tap(find.text('Mi plan'));
     await tester.pumpAndSettle();
+    expect(find.text('Tienes cambios sin guardar'), findsNothing);
+
     await tester.enterText(
-      find.widgetWithText(TextField, 'Tu nombre'),
-      'Camilo',
+      find.widgetWithText(TextField, 'Ingreso por quincena'),
+      '800000',
     );
     await tester.pump();
+    expect(find.text('Tienes cambios sin guardar'), findsOneWidget);
 
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.text('¿Descartar los cambios?'), findsOneWidget);
-
-    await tester.tap(find.text('Seguir editando'));
-    await tester.pumpAndSettle();
-    expect(find.text('Tu configuración'), findsOneWidget);
-
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Descartar'));
     await tester.pumpAndSettle();
-    expect(find.text('Hola, Juan'), findsOneWidget);
+    expect(find.text('Tienes cambios sin guardar'), findsNothing);
+    expect(find.widgetWithText(TextField, '797.000'), findsOneWidget);
   });
 
-  testWidgets('Salir de ⚙️ sin cambios no pregunta nada', (tester) async {
+  testWidgets('Guardar en Mi plan cambia el límite de Inicio', (tester) async {
     await abrir(tester);
-    await tester.tap(find.byTooltip('Configuración'));
+    await tester.tap(find.text('Mi plan'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Ingreso por quincena'),
+      '1000000',
+    );
+    await tester.pump();
+    await verYTocar(tester, find.text('Guardar'));
+    expect(find.text('Guardado ✓'), findsOneWidget);
+
+    await tester.tap(find.text('Inicio'));
+    await tester.pumpAndSettle();
+    // 1.000.000 - 100.000 - 50.000 - 272.000 = 578.000 / 3 días
+    expect(find.text(r'$192.666'), findsOneWidget);
+  });
+
+  testWidgets('El nombre se cambia en la configuración de la app', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await tester.tap(find.byTooltip('Configuración de la app'));
+    await tester.pumpAndSettle();
+    expect(find.text('Configuración'), findsOneWidget);
+
+    await tester.tap(find.text('Nombre'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Camilo');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    expect(find.text('¿Descartar los cambios?'), findsNothing);
-    expect(find.text('Hola, Juan'), findsOneWidget);
+    expect(find.text('Hola, Camilo'), findsOneWidget);
   });
 
-  testWidgets('Con letra grande, Agregar gasto sigue a la vista', (
-    tester,
-  ) async {
+  testWidgets('Con letra grande, el botón + sigue a la vista', (tester) async {
     tester.platformDispatcher.textScaleFactorTestValue = 1.5;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await abrir(tester);
-    await tester.tap(find.text('Agregar gasto'));
+    await tester.tap(find.byTooltip('Agregar gasto'));
     await tester.pumpAndSettle();
     expect(find.text('Registrar gasto'), findsOneWidget);
+    // La barra de abajo tampoco se desborda
+  });
+
+  testWidgets('Ver todos lleva a Movimientos agrupados por día', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await registrarGasto(tester, ['2', '0', '000']);
+
+    await tester.tap(find.text('Ver todos (1) →'));
+    await tester.pumpAndSettle();
+    expect(find.text('Movimientos').last, findsOneWidget);
+    expect(find.text('Hoy'), findsOneWidget);
+    expect(find.text('Almuerzo'), findsOneWidget);
+  });
+
+  testWidgets('Buscar en Movimientos filtra la lista', (tester) async {
+    await abrir(tester);
+    await registrarGasto(tester, ['2', '0', '000']); // Almuerzo
+    await tester.tap(find.byTooltip('Agregar gasto'));
+    await tester.pumpAndSettle();
+    await verYTocar(tester, find.text('Mercado'));
+    for (final t in ['5', '000']) {
+      await verYTocar(tester, find.byKey(ValueKey('tecla-$t')));
+    }
+    await tester.tap(find.textContaining('Confirmar gasto'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Movimientos'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'merca');
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 de 2 · \$5.000'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, 'Almuerzo'), findsNothing);
+  });
+
+  testWidgets('Análisis muestra en qué se va la plata', (tester) async {
+    await abrir(tester);
+    await registrarGasto(tester, ['2', '0', '000']);
+
+    await tester.tap(find.text('Análisis'));
+    await tester.pumpAndSettle();
+    expect(find.text('Gastado hasta hoy'), findsOneWidget);
+    expect(find.text(r'$20.000'), findsWidgets);
+    expect(
+      find.textContaining('Tu mayor gasto es Almuerzo: 100%'),
+      findsOneWidget,
+    );
   });
 }

@@ -40,6 +40,7 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
   late DateTime _fecha = widget.ahora();
   bool _deQuincena = categorias.first.deQuincena;
   bool _imprevisto = false;
+  late final List<Categoria> _propias = [...widget.categoriasPropias];
 
   bool get _editando => widget.inicial != null;
 
@@ -49,7 +50,7 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
     final g = widget.inicial;
     if (g == null) return;
 
-    final todas = [...categorias, ...widget.categoriasPropias];
+    final todas = [...categorias, ..._propias];
     _categoria =
         todas.where((c) => c.nombre == g.descripcion).firstOrNull ??
         Categoria(g.descripcion, 'Personalizada', Icons.receipt_long_rounded);
@@ -106,9 +107,12 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
     final nueva = await pedirNuevaCategoria(context);
     if (nueva == null) return;
 
-    final todas = [...categorias, ...widget.categoriasPropias];
+    final todas = [...categorias, ..._propias];
     final existente = todas.where((c) => c.nombre == nueva.nombre).firstOrNull;
-    if (existente == null) widget.onNuevaCategoria(nueva);
+    if (existente == null) {
+      widget.onNuevaCategoria(nueva);
+      _propias.add(nueva);
+    }
     _elegirCategoria(existente ?? nueva);
   }
 
@@ -150,7 +154,7 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
                   const SizedBox(height: 20),
                   const _Titulo('Categoría'),
                   _Categorias(
-                    todas: [...categorias, ...widget.categoriasPropias],
+                    todas: [...categorias, ..._propias],
                     elegida: _categoria,
                     onElegir: _elegirCategoria,
                     onOtro: _crearCategoria,
@@ -174,7 +178,7 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
                       value: _deQuincena,
                       onChanged: (v) => setState(() => _deQuincena = v),
                       title: Text(
-                        '¿Es para toda la ${widget.quincena.formaDePago.nombrePeriodo.toLowerCase()}?',
+                        '¿Es para ${widget.quincena.formaDePago.todoElPeriodo}?',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       subtitle: const Text(
