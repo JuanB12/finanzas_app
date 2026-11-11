@@ -1,5 +1,6 @@
 import 'calendario_pagos.dart';
 import 'forma_de_pago.dart';
+import 'metas.dart';
 
 class GastoFijo {
   final String nombre;
@@ -32,6 +33,8 @@ class Quincena {
   final int porcentajeAhorro; // Porcentaje de ahorro del usuario (0-100)
   final int porcentajeImprevistos;
   final FormaDePago formaDePago;
+  final List<Meta> metas;
+  final List<Tope> topes;
 
   const Quincena({
     required this.ingresos,
@@ -39,6 +42,8 @@ class Quincena {
     required this.porcentajeAhorro,
     this.porcentajeImprevistos = 0,
     this.formaDePago = const FormaDePago.quincenal(),
+    this.metas = const [],
+    this.topes = const [],
   });
 
   /// Lo que se separa para ahorrar apenas llega la quincena.
@@ -50,14 +55,21 @@ class Quincena {
 
   int get fondoImprevistos => ingresos * porcentajeImprevistos ~/ 100;
 
+  int get aportesMetas => metas.fold(0, (suma, m) => suma + m.aporteDelPeriodo);
+
   /// Lo que queda para gastar después del ahorro y los gastos fijos.
   /// Supone que todos los fijos caen en el mismo periodo.
-  int get disponible => ingresos - ahorro - totalGastosFijos - fondoImprevistos;
+  int get disponible =>
+      ingresos - ahorro - totalGastosFijos - fondoImprevistos - aportesMetas;
 
   int gastosFijosEntre(DateTime inicio, DateTime fin) => gastosFijos
       .where((g) => g.seCobraEntre(inicio, fin))
       .fold(0, (suma, g) => suma + g.monto);
 
   int disponibleEntre(DateTime inicio, DateTime fin) =>
-      ingresos - ahorro - fondoImprevistos - gastosFijosEntre(inicio, fin);
+      ingresos -
+      ahorro -
+      fondoImprevistos -
+      aportesMetas -
+      gastosFijosEntre(inicio, fin);
 }

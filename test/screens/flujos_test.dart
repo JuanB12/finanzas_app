@@ -268,4 +268,83 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Gastado hasta hoy'), findsOneWidget);
   });
+
+  Future<void> llenar(WidgetTester tester, String etiqueta, String texto) =>
+      tester.enterText(find.widgetWithText(TextField, etiqueta), texto);
+
+  testWidgets('Una meta dice cuándo llegas y baja el límite al guardar', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await tester.tap(find.text('Mi plan'));
+    await tester.pumpAndSettle();
+    await verYTocar(tester, find.text('Agregar meta'));
+
+    await llenar(tester, 'Nombre', 'Viaje a Cartagena');
+    await llenar(tester, '¿Cuánto necesitas?', '1200000');
+    await llenar(tester, '¿Cuánto llevas?', '450000');
+    await llenar(tester, '¿Cuánto apartas cada quincena?', '150000');
+    await tester.pump();
+    await tester.tap(find.text('Agregar'));
+    await tester.pumpAndSettle();
+
+    // Faltan 750.000: 5 aportes (13 nov, 30 nov, 15 dic, 31 dic, 15 ene)
+    expect(find.textContaining('llegas el 15 ene de 2027'), findsOneWidget);
+    expect(find.textContaining('37%'), findsOneWidget);
+
+    await verYTocar(tester, find.text('Guardar'));
+    await tester.tap(find.text('Inicio'));
+    await tester.pumpAndSettle();
+    // (405.450 - 150.000) / 3 días
+    expect(find.text(r'$85.150'), findsOneWidget);
+  });
+
+  testWidgets('Un tope avisa mientras escribes el gasto', (tester) async {
+    await abrir(tester);
+    await tester.tap(find.text('Mi plan'));
+    await tester.pumpAndSettle();
+    await verYTocar(tester, find.text('Agregar tope'));
+    await llenar(tester, 'Máximo por quincena', '25000');
+    await tester.pump();
+    await tester.tap(find.text('Agregar'));
+    await tester.pumpAndSettle();
+    await verYTocar(tester, find.text('Guardar'));
+
+    await tester.tap(find.byTooltip('Agregar gasto'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining(r'Llevas $0 de $25.000 en Almuerzo'),
+      findsOneWidget,
+    );
+    for (final t in ['2', '0', '000']) {
+      await verYTocar(tester, find.byKey(ValueKey('tecla-$t')));
+    }
+    expect(
+      find.textContaining(r'Ojo: llevas $20.000 de $25.000'),
+      findsOneWidget,
+    );
+    await verYTocar(tester, find.byKey(const ValueKey('tecla-0')));
+    expect(
+      find.textContaining(r'Te pasas de tu tope de Almuerzo por $175.000'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('El colchón guarda la prima sin tocar el límite', (tester) async {
+    await abrir(tester);
+    await tester.tap(find.text('Mi plan'));
+    await tester.pumpAndSettle();
+    await verYTocar(tester, find.text('Agregar ingreso extra'));
+    await llenar(tester, '¿De dónde salió?', 'Prima de diciembre');
+    await llenar(tester, 'Monto', '400000');
+    await tester.pump();
+    await tester.tap(find.text('Agregar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(r'$400.000'), findsOneWidget);
+    expect(find.text('Prima de diciembre'), findsOneWidget);
+    await tester.tap(find.text('Inicio'));
+    await tester.pumpAndSettle();
+    expect(find.text(r'$135.150'), findsOneWidget);
+  });
 }

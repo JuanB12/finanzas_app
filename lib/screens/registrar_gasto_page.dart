@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import '../models/calendario_pagos.dart';
 import '../models/festivos_colombia.dart';
 import '../models/gasto.dart';
+import '../models/metas.dart';
 import '../models/presupuesto.dart';
 import '../models/quincena.dart';
 import '../tema.dart';
 import '../utils/formato.dart';
 import '../utils/teclado.dart';
+import '../widgets/aviso_tope.dart';
 import '../widgets/categorias.dart';
 import '../widgets/nueva_categoria_sheet.dart';
 
@@ -60,6 +62,10 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
     _deQuincena = g.deQuincena;
     _imprevisto = g.imprevisto;
   }
+
+  Tope? get _tope => widget.quincena.topes
+      .where((t) => t.categoria == _categoria.nombre)
+      .firstOrNull;
 
   bool get _esProgramado =>
       soloFecha(_fecha).isAfter(soloFecha(widget.ahora()));
@@ -159,6 +165,20 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
                     onElegir: _elegirCategoria,
                     onOtro: _crearCategoria,
                   ),
+                  if (_tope case final tope?)
+                    AvisoTope(
+                      tope: tope,
+                      estado: estadoTope(
+                        tope: tope,
+                        gastos: widget.gastos,
+                        inicio: despues.inicio,
+                        fin: despues.fin,
+                        extra:
+                            despues.cualQuincena(_fecha) == CualQuincena.actual
+                            ? _monto
+                            : 0,
+                      ),
+                    ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     value: _imprevisto,

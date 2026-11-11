@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../datos_ejemplo.dart';
+import '../models/colchon.dart';
 import '../models/festivos_colombia.dart';
 import '../models/gasto.dart';
 import '../models/presupuesto.dart';
@@ -23,6 +24,7 @@ class Finanzas extends ChangeNotifier {
   Quincena _quincena;
   final List<Gasto> _gastos = [];
   final List<Categoria> _categoriasPropias = [];
+  final List<IngresoExtra> _ingresosExtra = [];
 
   ThemeMode _modoTema = ThemeMode.system;
 
@@ -32,6 +34,7 @@ class Finanzas extends ChangeNotifier {
   List<Gasto> get gastos => List.unmodifiable(_gastos);
   List<Categoria> get categoriasPropias =>
       List.unmodifiable(_categoriasPropias);
+  Colchon get colchon => Colchon(ingresos: List.unmodifiable(_ingresosExtra));
 
   Set<DateTime> get festivos => festivosColombiaAlrededorDe(ahora());
 
@@ -77,6 +80,16 @@ class Finanzas extends ChangeNotifier {
 
   void insertarGasto(int posicion, Gasto gasto) {
     _gastos.insert(posicion, gasto);
+    notifyListeners();
+  }
+
+  void agregarIngresoExtra(IngresoExtra ingreso) {
+    _ingresosExtra.add(ingreso);
+    notifyListeners();
+  }
+
+  void borrarIngresoExtra(IngresoExtra ingreso) {
+    _ingresosExtra.remove(ingreso);
     notifyListeners();
   }
 
