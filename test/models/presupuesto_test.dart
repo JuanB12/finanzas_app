@@ -236,4 +236,56 @@ void main() {
     expect(r.cualQuincena(DateTime(2026, 11, 12, 23)), CualQuincena.actual);
     expect(r.cualQuincena(DateTime(2026, 11, 13)), CualQuincena.proxima);
   });
+
+  group('Fondo de imprevistos', () {
+    // disponible: 797.000 - 79.700 - 347.000 - 39.850 (fondo) = 330.450
+    final conFondo = Quincena(
+      ingresos: quincena.ingresos,
+      gastosFijos: quincena.gastosFijos,
+      porcentajeAhorro: 10,
+      porcentajeImprevistos: 5,
+    );
+
+    ResumenDelDia conImprevistos(List<Gasto> gastos) => resumenDelDia(
+      quincena: conFondo,
+      gastos: gastos,
+      hoy: hoy,
+      festivos: {},
+    );
+
+    test('Sin imprevistos, el fondo queda completo', () {
+      final r = conImprevistos([]);
+      expect(r.fondoImprevistos, 39850);
+      expect(r.imprevistosRestantes, 39850);
+      expect(r.limiteHoy, 110150); // 330.450 / 3
+    });
+
+    test('Un imprevisto sale del fondo, no del día', () {
+      final r = conImprevistos([
+        Gasto(
+          descripcion: 'Remedio de Bruno',
+          monto: 20000,
+          fecha: hoy,
+          imprevisto: true,
+        ),
+      ]);
+      expect(r.gastadoHoy, 0);
+      expect(r.limiteHoy, 110150);
+      expect(r.imprevistosRestantes, 19850);
+    });
+
+    test('Si el fondo no alcanza, lo que sobra se reparte en la quincena', () {
+      final r = conImprevistos([
+        Gasto(
+          descripcion: 'Espichada',
+          monto: 60000,
+          fecha: hoy,
+          imprevisto: true,
+        ),
+      ]);
+      expect(r.imprevistosRestantes, 0);
+      expect(r.limiteHoy, 103433); // (330.450 - 20.150) / 3
+      expect(r.disponibleRestante, 310300);
+    });
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:finanzas_app/models/calendario_pagos.dart';
 import 'package:finanzas_app/models/festivos_colombia.dart';
+import 'package:finanzas_app/models/forma_de_pago.dart';
 
 // Reglas del calendario de pagos (Colombia, pago quincenal):
 // 1. Hoy cuenta como día para gastar.
@@ -109,6 +110,70 @@ void main() {
       expect(
         proximoPago(hoy, festivos: festivosColombiaAlrededorDe(hoy)),
         DateTime(2026, 12, 31),
+      );
+    });
+  });
+
+  group('Otras formas de pago', () {
+    const cincoYVeinte = FormaDePago.quincenal(primerDia: 5, segundoDia: 20);
+    const finDeMes = FormaDePago.mensual();
+
+    test('Quincenal el 5 y el 20', () {
+      final hoy = DateTime(2026, 11, 10);
+      expect(
+        proximoPago(hoy, festivos: {}, forma: cincoYVeinte),
+        DateTime(2026, 11, 20),
+      );
+      expect(
+        pagoAnterior(hoy, festivos: {}, forma: cincoYVeinte),
+        DateTime(2026, 11, 5),
+      );
+    });
+
+    test('Quincenal el 5 y el 20: si el 5 cae sábado, pagan el viernes 4', () {
+      final hoy = DateTime(2026, 11, 21);
+      expect(
+        proximoPago(hoy, festivos: {}, forma: cincoYVeinte),
+        DateTime(2026, 12, 4),
+      );
+    });
+
+    test('Mensual a fin de mes', () {
+      final hoy = DateTime(2026, 11, 10);
+      expect(
+        proximoPago(hoy, festivos: {}, forma: finDeMes),
+        DateTime(2026, 11, 30),
+      );
+      expect(
+        pagoAnterior(hoy, festivos: {}, forma: finDeMes),
+        DateTime(2026, 10, 30),
+      );
+      expect(diasHastaPago(hoy, festivos: {}, forma: finDeMes), 20);
+    });
+
+    test(
+      'Mensual el 1: el 1 de enero es festivo, pagan el 31 de diciembre',
+      () {
+        final hoy = DateTime(2026, 12, 15);
+        const elPrimero = FormaDePago.mensual(dia: 1);
+        final festivos = festivosColombiaAlrededorDe(hoy);
+        expect(
+          proximoPago(hoy, festivos: festivos, forma: elPrimero),
+          DateTime(2026, 12, 31),
+        );
+        expect(
+          pagoAnterior(hoy, festivos: festivos, forma: elPrimero),
+          DateTime(2026, 12, 1),
+        );
+      },
+    );
+
+    test('El día 30 en febrero se vuelve el último día del mes', () {
+      final hoy = DateTime(2027, 2, 16); // el 28 de feb. 2027 es domingo
+      const quinceYTreinta = FormaDePago.quincenal(segundoDia: 30);
+      expect(
+        proximoPago(hoy, festivos: {}, forma: quinceYTreinta),
+        DateTime(2027, 2, 26),
       );
     });
   });

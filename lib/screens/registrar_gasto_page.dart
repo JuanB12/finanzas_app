@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../datos_ejemplo.dart';
 import '../models/calendario_pagos.dart';
 import '../models/festivos_colombia.dart';
 import '../models/gasto.dart';
 import '../models/presupuesto.dart';
+import '../models/quincena.dart';
 import '../tema.dart';
 import '../utils/formato.dart';
 import '../utils/teclado.dart';
@@ -15,12 +15,16 @@ class RegistrarGastoPage extends StatefulWidget {
   const RegistrarGastoPage({
     super.key,
     required this.gastos,
+    required this.quincena,
+    this.ahora = DateTime.now,
     required this.categoriasPropias,
     required this.onNuevaCategoria,
     this.inicial,
   });
 
   final List<Gasto> gastos;
+  final Quincena quincena;
+  final DateTime Function() ahora;
   final List<Categoria> categoriasPropias;
   final ValueChanged<Categoria> onNuevaCategoria;
   final Gasto? inicial; // si viene, estamos editando
@@ -33,8 +37,9 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
   int _monto = 0;
   Categoria _categoria = categorias.first;
   MedioPago _medio = MedioPago.nequi;
-  DateTime _fecha = DateTime.now();
+  late DateTime _fecha = widget.ahora();
   bool _deQuincena = categorias.first.deQuincena;
+  bool _imprevisto = false;
 
   bool get _editando => widget.inicial != null;
 
@@ -52,29 +57,42 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
     _medio = g.medioPago;
     _fecha = g.fecha;
     _deQuincena = g.deQuincena;
+    _imprevisto = g.imprevisto;
   }
 
   bool get _esProgramado =>
-      soloFecha(_fecha).isAfter(soloFecha(DateTime.now()));
+      soloFecha(_fecha).isAfter(soloFecha(widget.ahora()));
 
   Gasto get _gasto => Gasto(
     descripcion: _categoria.nombre,
     monto: _monto,
     fecha: _fecha,
     programado: _esProgramado,
-    deQuincena: _deQuincena,
+    deQuincena: _deQuincena && !_imprevisto,
+    imprevisto: _imprevisto,
     medioPago: _medio,
   );
 
   // Cómo quedaría la quincena si confirmas este gasto
   ResumenDelDia get _despues {
-    final hoy = DateTime.now();
+    final hoy = widget.ahora();
     return resumenDelDia(
-      quincena: quincenaEjemplo,
+      quincena: widget.quincena,
       gastos: [...widget.gastos, _gasto],
       hoy: hoy,
       festivos: festivosColombiaAlrededorDe(hoy),
     );
+  }
+
+  // Lo que queda en el fondo sin contar el gasto que estás escribiendo
+  int get _fondoRestante {
+    final hoy = widget.ahora();
+    return resumenDelDia(
+      quincena: widget.quincena,
+      gastos: widget.gastos,
+      hoy: hoy,
+      festivos: festivosColombiaAlrededorDe(hoy),
+    ).imprevistosRestantes;
   }
 
   void _elegirCategoria(Categoria c) {
@@ -95,11 +113,13 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
   }
 
   Future<void> _elegirFecha() async {
-    final hoy = DateTime.now();
+    final hoy = widget.ahora();
     final elegida = await showDatePicker(
       context: context,
       initialDate: _fecha,
-      firstDate: hoy.subtract(const Duration(days: 60)),
+      firstDate: _fecha.isBefore(hoy.subtract(const Duration(days: 60)))
+          ? _fecha
+          : hoy.subtract(const Duration(days: 60)),
       lastDate: hoy.add(const Duration(days: 60)),
     );
     if (elegida != null) setState(() => _fecha = elegida);
@@ -116,6 +136,7 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
             _BarraSuperior(
               titulo: _editando ? 'Editar gasto' : 'Registrar gasto',
               fecha: _fecha,
+              hoy: widget.ahora(),
               programado: _esProgramado,
               onElegirFecha: _elegirFecha,
             ),
@@ -134,14 +155,27 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
                     onElegir: _elegirCategoria,
                     onOtro: _crearCategoria,
                   ),
-                  if (!_esProgramado)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _imprevisto,
+                    onChanged: (v) => setState(() => _imprevisto = v),
+                    title: const Text(
+                      '🛟 Es un imprevisto',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      'Sale del fondo: te quedan ${formatoPesos(_fondoRestante)}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  if (!_esProgramado && !_imprevisto)
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       value: _deQuincena,
                       onChanged: (v) => setState(() => _deQuincena = v),
-                      title: const Text(
-                        '¿Es para toda la quincena?',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                      title: Text(
+                        '¿Es para toda la ${widget.quincena.formaDePago.nombrePeriodo.toLowerCase()}?',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       subtitle: const Text(
                         'No se descuenta solo de hoy',
@@ -181,18 +215,20 @@ class _BarraSuperior extends StatelessWidget {
   const _BarraSuperior({
     required this.titulo,
     required this.fecha,
+    required this.hoy,
     required this.programado,
     required this.onElegirFecha,
   });
 
   final String titulo;
   final DateTime fecha;
+  final DateTime hoy;
   final bool programado;
   final VoidCallback onElegirFecha;
 
   @override
   Widget build(BuildContext context) {
-    final esHoy = soloFecha(fecha) == soloFecha(DateTime.now());
+    final esHoy = soloFecha(fecha) == soloFecha(hoy);
     final subtitulo = esHoy
         ? 'Hoy · ${fechaCorta(fecha)}'
         : programado
@@ -403,9 +439,12 @@ class _Categorias extends StatelessWidget {
             children: [
               Icon(Icons.add_circle_outline_rounded, size: 20),
               SizedBox(width: 6),
-              Text(
-                'Otro',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              Flexible(
+                child: Text(
+                  'Otro',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -515,6 +554,7 @@ class _Teclado extends StatelessWidget {
       children: [
         for (final t in _teclas)
           Material(
+            key: ValueKey('tecla-$t'),
             color: t == '000' || t == borrar
                 ? const Color(0xFFE3EBFF)
                 : Colors.white,

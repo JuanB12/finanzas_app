@@ -25,4 +25,16 @@ void main() {
     // 797.000 - 79.700 - 347.000
     expect(quincena.disponible, 370300);
   });
+
+  test('El fondo de imprevistos también se separa del disponible', () {
+    const conFondo = Quincena(
+      ingresos: 797000,
+      gastosFijos: [GastoFijo(nombre: 'Gimnasio', monto: 100000)],
+      porcentajeAhorro: 10,
+      porcentajeImprevistos: 5,
+    );
+    expect(conFondo.fondoImprevistos, 39850);
+    // 797.000 - 79.700 - 100.000 - 39.850
+    expect(conFondo.disponible, 577450);
+  });
 }

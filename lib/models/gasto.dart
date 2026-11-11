@@ -13,6 +13,7 @@ class Gasto {
   final DateTime fecha;
   final bool programado;
   final bool deQuincena; // ej. el mercado: es para toda la quincena
+  final bool imprevisto;
   final MedioPago medioPago;
 
   const Gasto({
@@ -21,6 +22,7 @@ class Gasto {
     required this.fecha,
     this.programado = false,
     this.deQuincena = false,
+    this.imprevisto = false,
     this.medioPago = MedioPago.efectivo,
   });
 }

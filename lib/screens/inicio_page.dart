@@ -4,13 +4,18 @@ import '../datos_ejemplo.dart';
 import '../models/festivos_colombia.dart';
 import '../models/gasto.dart';
 import '../models/presupuesto.dart';
+import '../models/quincena.dart';
 import '../tema.dart';
 import '../utils/formato.dart';
 import '../widgets/categorias.dart';
+import 'configuracion_page.dart';
 import 'registrar_gasto_page.dart';
 
 class InicioPage extends StatefulWidget {
-  const InicioPage({super.key});
+  const InicioPage({super.key, this.ahora = DateTime.now});
+
+  // Las pruebas pasan un reloj con fecha fija
+  final DateTime Function() ahora;
 
   @override
   State<InicioPage> createState() => _InicioPageState();
@@ -20,6 +25,25 @@ class _InicioPageState extends State<InicioPage> {
   // Por ahora en memoria: se pierden al cerrar la app
   final List<Gasto> _gastos = [];
   final List<Categoria> _categoriasPropias = [];
+  String _nombre = nombreInicial;
+  Quincena _quincena = quincenaInicial;
+
+  Future<void> _abrirConfiguracion() async {
+    final config = await Navigator.push<Configuracion>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ConfiguracionPage(
+          inicial: (nombre: _nombre, quincena: _quincena),
+          ahora: widget.ahora,
+        ),
+      ),
+    );
+    if (config == null || !mounted) return;
+    setState(() {
+      _nombre = config.nombre;
+      _quincena = config.quincena;
+    });
+  }
 
   Future<void> _abrirRegistro({Gasto? editar}) async {
     final gasto = await Navigator.push<Gasto>(
@@ -32,6 +56,8 @@ class _InicioPageState extends State<InicioPage> {
             for (final g in _gastos)
               if (!identical(g, editar)) g,
           ],
+          quincena: _quincena,
+          ahora: widget.ahora,
           categoriasPropias: _categoriasPropias,
           onNuevaCategoria: _categoriasPropias.add,
           inicial: editar,
@@ -68,24 +94,32 @@ class _InicioPageState extends State<InicioPage> {
 
   @override
   Widget build(BuildContext context) {
-    final hoy = DateTime.now();
+    final hoy = widget.ahora();
     final resumen = resumenDelDia(
-      quincena: quincenaEjemplo,
+      quincena: _quincena,
       gastos: _gastos,
       hoy: hoy,
       festivos: festivosColombiaAlrededorDe(hoy),
     );
 
     return Scaffold(
+      // Fijo abajo: siempre a la mano, aunque haya muchos movimientos
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: _BotonAgregarGasto(onPressed: _abrirRegistro),
+        ),
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const _Encabezado(),
+            _Encabezado(nombre: _nombre, onConfigurar: _abrirConfiguracion),
             const SizedBox(height: 20),
-            _TarjetaQuincena(resumen: resumen),
-            const SizedBox(height: 20),
-            _BotonAgregarGasto(onPressed: _abrirRegistro),
+            _TarjetaQuincena(
+              resumen: resumen,
+              periodo: _quincena.formaDePago.nombrePeriodo,
+            ),
             const SizedBox(height: 28),
             _UltimosMovimientos(
               gastos: _gastos,
@@ -102,7 +136,10 @@ class _InicioPageState extends State<InicioPage> {
 }
 
 class _Encabezado extends StatelessWidget {
-  const _Encabezado();
+  const _Encabezado({required this.nombre, required this.onConfigurar});
+
+  final String nombre;
+  final VoidCallback onConfigurar;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +150,7 @@ class _Encabezado extends StatelessWidget {
           radius: 22,
           backgroundColor: verde,
           child: Text(
-            nombreUsuario[0],
+            nombre[0].toUpperCase(),
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -127,15 +164,16 @@ class _Encabezado extends StatelessWidget {
             children: [
               Text('Bienvenido', style: textos.bodySmall),
               Text(
-                'Hola, $nombreUsuario',
+                'Hola, $nombre',
                 style: textos.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
         ),
         IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_none_rounded),
+          onPressed: onConfigurar,
+          tooltip: 'Configuración',
+          icon: const Icon(Icons.settings_outlined),
         ),
       ],
     );
@@ -143,9 +181,10 @@ class _Encabezado extends StatelessWidget {
 }
 
 class _TarjetaQuincena extends StatelessWidget {
-  const _TarjetaQuincena({required this.resumen});
+  const _TarjetaQuincena({required this.resumen, required this.periodo});
 
   final ResumenDelDia resumen;
+  final String periodo;
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +236,7 @@ class _TarjetaQuincena extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Quincena · ${fechaCorta(r.inicio)} al ${fechaCorta(ultimoDia)}',
+                        '$periodo · ${fechaCorta(r.inicio)} al ${fechaCorta(ultimoDia)}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white70,
@@ -232,7 +271,14 @@ class _TarjetaQuincena extends StatelessWidget {
             if (r.apartado > 0) ...[
               const SizedBox(height: 10),
               Text(
-                'Apartado para la quincena: ${formatoPesos(r.apartado)}',
+                'Apartado para la ${periodo.toLowerCase()}: ${formatoPesos(r.apartado)}',
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ],
+            if (r.fondoImprevistos > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                '🛟 Imprevistos: te quedan ${formatoPesos(r.imprevistosRestantes)} de ${formatoPesos(r.fondoImprevistos)}',
                 style: const TextStyle(fontSize: 12, color: Colors.white70),
               ),
             ],
@@ -292,9 +338,12 @@ class _BotonAgregarGasto extends StatelessWidget {
             child: Icon(Icons.add, color: azulOscuro),
           ),
           SizedBox(width: 12),
-          Text(
-            'Agregar gasto',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          Flexible(
+            child: Text(
+              'Agregar gasto',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -321,6 +370,7 @@ class _UltimosMovimientos extends StatelessWidget {
     final cual = switch (resumen.cualQuincena(g.fecha)) {
       CualQuincena.pasada => 'Quincena pasada',
       CualQuincena.proxima => 'Próxima quincena',
+      CualQuincena.actual when g.imprevisto => '🛟 Imprevisto',
       CualQuincena.actual when g.programado => 'Programado',
       CualQuincena.actual when g.deQuincena => 'De la quincena',
       CualQuincena.actual => null,

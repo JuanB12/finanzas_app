@@ -48,6 +48,16 @@ Registro de las decisiones importantes: qué decidimos, por qué y qué descarta
 - **Crecimiento de Inicio:** barra de navegación abajo (Inicio, Movimientos, Presupuesto, Análisis), con el toque de Liquid Glass ahí. En Inicio solo los últimos 5 movimientos + "Ver todos". En Movimientos, agrupar por día.
 - **Análisis:** en qué categorías se va la plata cada quincena.
 
+- **Gastos fijos mensuales con pago quincenal:** el gimnasio se paga una vez al mes, pero hoy la app lo descuenta de cada quincena. Hay que decidir en qué quincena se cobra cada gasto fijo.
+- **Nombre de la clase `Quincena`:** ahora también representa un mes (pago mensual). Renombrarla a algo como `Periodo` cuando haya un momento tranquilo.
+- **Sobrante del fondo de imprevistos:** al cerrar el periodo, mandarlo al ahorro o al colchón. Necesita la base de datos para recordar el periodo anterior.
+
+## 2026-11-10 · Configuración y fondo de imprevistos
+
+- **Forma de pago:** quincenal con dos días cualesquiera, o mensual con un día. El 31 significa "último día del mes".
+- **Selector quincenal/mensual:** botón segmentado, no checklist ni combobox (son solo 2 opciones excluyentes). Los días sí van en lista desplegable.
+- **Imprevistos:** un % del ingreso que se separa como el ahorro. Un gasto marcado como imprevisto sale primero del fondo. Si no alcanza, lo que falta se reparte en el periodo.
+
 ## Orden acordado (2026-11-09)
 
 1. Configuración de la quincena + fondo de imprevistos
