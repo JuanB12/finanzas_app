@@ -1,7 +1,6 @@
 import 'package:finanzas_app/estado/finanzas.dart';
-import 'package:finanzas_app/screens/app_shell.dart';
+import 'package:finanzas_app/main.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Martes 10 nov. 2026: quincena del 30 oct. al 12 nov. (quedan 3 días).
@@ -11,12 +10,7 @@ final hoy = DateTime(2026, 11, 10, 10);
 
 Widget app() => FinanzasScope(
   finanzas: Finanzas(ahora: () => hoy),
-  child: MaterialApp(
-    locale: const Locale('es'),
-    supportedLocales: const [Locale('es')],
-    localizationsDelegates: GlobalMaterialLocalizations.delegates,
-    home: const AppShell(),
-  ),
+  child: const FinanzasApp(),
 );
 
 Future<void> abrir(WidgetTester tester) async {
@@ -49,7 +43,7 @@ Future<void> registrarGasto(
   for (final t in teclas) {
     await verYTocar(tester, find.byKey(ValueKey('tecla-$t')));
   }
-  if (imprevisto) await verYTocar(tester, find.text('🛟 Es un imprevisto'));
+  if (imprevisto) await verYTocar(tester, find.text('Es un imprevisto'));
   await tester.tap(find.textContaining('Confirmar gasto'));
   await tester.pumpAndSettle();
 }
@@ -248,5 +242,30 @@ void main() {
       find.textContaining('Tu mayor gasto es Almuerzo: 100%'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Cambiar a modo oscuro y usar la app', (tester) async {
+    await abrir(tester);
+    Brightness brillo() =>
+        Theme.of(tester.element(find.text('Hola, Juan'))).brightness;
+    expect(brillo(), Brightness.light);
+
+    await tester.tap(find.byTooltip('Configuración de la app'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apariencia'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Oscuro'));
+    await tester.pumpAndSettle();
+    expect(find.text('Oscuro'), findsOneWidget); // ahora es el detalle
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(brillo(), Brightness.dark);
+
+    // Las pantallas funcionan igual en oscuro
+    await registrarGasto(tester, ['2', '0', '000']);
+    expect(find.text(r'$115.150'), findsOneWidget);
+    await tester.tap(find.text('Análisis'));
+    await tester.pumpAndSettle();
+    expect(find.text('Gastado hasta hoy'), findsOneWidget);
   });
 }

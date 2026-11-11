@@ -58,7 +58,7 @@ class _Encabezado extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: verde,
+                  backgroundColor: context.c.avatar,
                   child: Text(
                     nombre[0].toUpperCase(),
                     style: const TextStyle(
@@ -121,7 +121,7 @@ class _TarjetaQuincena extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: azulOscuro,
+        color: context.c.tarjeta,
         borderRadius: BorderRadius.circular(24),
       ),
       child: DefaultTextStyle.merge(
@@ -194,9 +194,24 @@ class _TarjetaQuincena extends StatelessWidget {
             ],
             if (r.fondoImprevistos > 0) ...[
               const SizedBox(height: 4),
-              Text(
-                '🛟 Imprevistos: te quedan ${formatoPesos(r.imprevistosRestantes)} de ${formatoPesos(r.fondoImprevistos)}',
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.health_and_safety_outlined,
+                    size: 14,
+                    color: Colors.white70,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Imprevistos: te quedan ${formatoPesos(r.imprevistosRestantes)} de ${formatoPesos(r.fondoImprevistos)}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -261,24 +276,24 @@ class _UltimosMovimientos extends StatelessWidget {
           ],
         ),
         if (recientes.isNotEmpty)
-          const Text(
+          Text(
             'Toca para editar · desliza a la izquierda para borrar',
-            style: TextStyle(fontSize: 12, color: Colors.black45),
+            style: TextStyle(fontSize: 12, color: context.c.textoTenue),
           ),
         const SizedBox(height: 12),
         if (recientes.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
                 'Todavía no has registrado gastos',
-                style: TextStyle(color: Colors.black45),
+                style: TextStyle(color: context.c.textoTenue),
               ),
             ),
           )
         else
           Material(
-            color: Colors.white,
+            color: context.c.superficie,
             borderRadius: BorderRadius.circular(20),
             clipBehavior: Clip.antiAlias,
             child: Column(

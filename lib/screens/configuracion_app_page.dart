@@ -5,8 +5,38 @@ import '../tema.dart';
 
 const versionApp = '1.0.0';
 
+const _nombresModo = {
+  ThemeMode.system: 'Automático (como el teléfono)',
+  ThemeMode.light: 'Claro',
+  ThemeMode.dark: 'Oscuro',
+};
+
 class ConfiguracionAppPage extends StatelessWidget {
   const ConfiguracionAppPage({super.key});
+
+  Future<void> _elegirApariencia(BuildContext context) async {
+    final finanzas = FinanzasScope.de(context);
+    final modo = await showDialog<ThemeMode>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Apariencia'),
+        children: [
+          for (final MapEntry(key: m, value: nombre) in _nombresModo.entries)
+            ListTile(
+              title: Text(nombre),
+              leading: Icon(
+                m == finanzas.modoTema
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                color: context.c.acento,
+              ),
+              onTap: () => Navigator.pop(context, m),
+            ),
+        ],
+      ),
+    );
+    if (modo != null) finanzas.cambiarModoTema(modo);
+  }
 
   Future<void> _cambiarNombre(BuildContext context) async {
     final finanzas = FinanzasScope.de(context);
@@ -29,7 +59,7 @@ class ConfiguracionAppPage extends StatelessWidget {
           Center(
             child: CircleAvatar(
               radius: 40,
-              backgroundColor: verde,
+              backgroundColor: context.c.avatar,
               child: Text(
                 finanzas.nombre[0].toUpperCase(),
                 style: const TextStyle(
@@ -59,14 +89,14 @@ class ConfiguracionAppPage extends StatelessWidget {
               ),
             ],
           ),
-          const _Grupo(
+          _Grupo(
             titulo: 'Preferencias',
             children: [
               _Opcion(
                 icono: Icons.dark_mode_outlined,
                 titulo: 'Apariencia',
-                detalle: 'Claro',
-                pronto: true,
+                detalle: _nombresModo[finanzas.modoTema]!,
+                onTap: () => _elegirApariencia(context),
               ),
               _Opcion(
                 icono: Icons.notifications_none_rounded,
@@ -112,16 +142,16 @@ class _Grupo extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
           child: Text(
             titulo.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               letterSpacing: 1,
-              color: Colors.black54,
+              color: context.c.textoSuave,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
         Material(
-          color: Colors.white,
+          color: context.c.superficie,
           borderRadius: BorderRadius.circular(18),
           clipBehavior: Clip.antiAlias,
           child: Column(children: children),
@@ -151,14 +181,14 @@ class _Opcion extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
-      leading: Icon(icono, color: verde),
+      leading: Icon(icono, color: context.c.acento),
       title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(detalle),
       trailing: pronto
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFE3EBFF),
+                color: context.c.suave,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(

@@ -40,9 +40,9 @@ class _AppShellState extends State<AppShell> {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE6EBF5))),
+        decoration: BoxDecoration(
+          color: context.c.superficie,
+          border: Border(top: BorderSide(color: context.c.pista)),
         ),
         child: SafeArea(
           top: false,
@@ -105,7 +105,7 @@ class _Pestana extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = activa ? azulOscuro : Colors.black45;
+    final color = activa ? context.c.texto : context.c.textoTenue;
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -152,16 +152,20 @@ class _BotonMas extends StatelessWidget {
       child: Tooltip(
         message: 'Agregar gasto',
         child: Material(
-          color: Colors.black,
+          color: context.c.primario,
           shape: const CircleBorder(),
           elevation: 3,
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onTap,
-            child: const SizedBox(
+            child: SizedBox(
               width: 56,
               height: 56,
-              child: Icon(Icons.add_rounded, color: verdeClaro, size: 32),
+              child: Icon(
+                Icons.add_rounded,
+                color: context.c.acentoSobrePrimario,
+                size: 32,
+              ),
             ),
           ),
         ),

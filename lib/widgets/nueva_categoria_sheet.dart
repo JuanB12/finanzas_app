@@ -77,13 +77,17 @@ class _NuevaCategoriaSheetState extends State<_NuevaCategoriaSheet> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: icono == _icono ? Colors.black : Colors.white,
+                      color: icono == _icono
+                          ? context.c.primario
+                          : context.c.superficie,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12),
+                      border: Border.all(color: context.c.pista),
                     ),
                     child: Icon(
                       icono,
-                      color: icono == _icono ? verdeClaro : azulOscuro,
+                      color: icono == _icono
+                          ? context.c.acentoSobrePrimario
+                          : context.c.texto,
                     ),
                   ),
                 ),
@@ -100,7 +104,7 @@ class _NuevaCategoriaSheetState extends State<_NuevaCategoriaSheet> {
                       Categoria(nombre, 'Personalizada', _icono),
                     ),
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: context.c.primario,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: const Text('Listo'),

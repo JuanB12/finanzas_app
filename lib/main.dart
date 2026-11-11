@@ -20,16 +20,9 @@ class FinanzasApp extends StatelessWidget {
       locale: const Locale('es'),
       supportedLocales: const [Locale('es')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: verde,
-          primary: verde,
-          surface: fondo,
-          onSurface: azulOscuro,
-        ),
-        scaffoldBackgroundColor: fondo,
-        fontFamily: 'PlusJakartaSans',
-      ),
+      theme: temaClaro,
+      darkTheme: temaOscuro,
+      themeMode: FinanzasScope.de(context).modoTema,
       home: const AppShell(),
     );
   }

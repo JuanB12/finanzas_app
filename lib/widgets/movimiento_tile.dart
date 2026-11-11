@@ -20,7 +20,7 @@ class MovimientoTile extends StatelessWidget {
     final cual = switch (resumen.cualQuincena(g.fecha)) {
       CualQuincena.pasada => 'Quincena pasada',
       CualQuincena.proxima => 'Próxima quincena',
-      CualQuincena.actual when g.imprevisto => '🛟 Imprevisto',
+      CualQuincena.actual when g.imprevisto => 'Imprevisto',
       CualQuincena.actual when g.programado => 'Programado',
       CualQuincena.actual when g.deQuincena => 'De la quincena',
       CualQuincena.actual => null,
@@ -46,10 +46,10 @@ class MovimientoTile extends StatelessWidget {
       child: ListTile(
         onTap: () => abrirRegistro(context, editar: g),
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFE3EBFF),
+          backgroundColor: context.c.suave,
           child: Icon(
             iconoDe(g.descripcion, finanzas.categoriasPropias),
-            color: azulOscuro,
+            color: context.c.texto,
           ),
         ),
         title: Text(
@@ -72,7 +72,7 @@ class MovimientoTile extends StatelessWidget {
             if (conFecha)
               Text(
                 fechaCorta(g.fecha),
-                style: const TextStyle(fontSize: 12, color: Colors.black45),
+                style: TextStyle(fontSize: 12, color: context.c.textoTenue),
               ),
           ],
         ),

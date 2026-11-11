@@ -163,8 +163,12 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
                     contentPadding: EdgeInsets.zero,
                     value: _imprevisto,
                     onChanged: (v) => setState(() => _imprevisto = v),
+                    secondary: Icon(
+                      Icons.health_and_safety_outlined,
+                      color: context.c.acento,
+                    ),
                     title: const Text(
-                      '🛟 Es un imprevisto',
+                      'Es un imprevisto',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
@@ -177,6 +181,10 @@ class _RegistrarGastoPageState extends State<RegistrarGastoPage> {
                       contentPadding: EdgeInsets.zero,
                       value: _deQuincena,
                       onChanged: (v) => setState(() => _deQuincena = v),
+                      secondary: Icon(
+                        Icons.date_range_outlined,
+                        color: context.c.acento,
+                      ),
                       title: Text(
                         '¿Es para ${widget.quincena.formaDePago.todoElPeriodo}?',
                         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -259,7 +267,9 @@ class _BarraSuperior extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: programado ? Colors.orange.shade800 : Colors.black54,
+                    color: programado
+                        ? context.c.textoProgramado
+                        : context.c.textoSuave,
                   ),
                 ),
               ],
@@ -288,27 +298,29 @@ class _Vista extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.c.superficie,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Icon(Icons.account_balance_wallet_outlined, color: verde),
+          Icon(Icons.account_balance_wallet_outlined, color: context.c.acento),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Libre en la quincena después de este gasto',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: context.c.textoSuave),
                 ),
                 Text(
                   formatoPesos(r.disponibleRestante),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: r.disponibleRestante < 0 ? Colors.red : verde,
+                    color: r.disponibleRestante < 0
+                        ? context.c.textoPeligro
+                        : context.c.acento,
                   ),
                 ),
               ],
@@ -317,7 +329,7 @@ class _Vista extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: enMeta ? const Color(0xFFD1FAE5) : const Color(0xFFFFE4E1),
+              color: enMeta ? context.c.exito : context.c.peligro,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -325,7 +337,7 @@ class _Vista extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: enMeta ? verde : Colors.red.shade700,
+                color: enMeta ? context.c.acento : context.c.textoPeligro,
               ),
             ),
           ),
@@ -344,7 +356,7 @@ class _Monto extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Text('Monto del gasto', style: TextStyle(color: Colors.black54)),
+        Text('Monto del gasto', style: TextStyle(color: context.c.textoSuave)),
         FittedBox(
           child: Text(
             formatoPesos(monto),
@@ -355,9 +367,9 @@ class _Monto extends StatelessWidget {
             ),
           ),
         ),
-        const Text(
+        Text(
           'Pesos colombianos (COP)',
-          style: TextStyle(fontSize: 12, color: Colors.black45),
+          style: TextStyle(fontSize: 12, color: context.c.textoTenue),
         ),
       ],
     );
@@ -506,7 +518,7 @@ class _Opcion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: activa ? Colors.black : Colors.white,
+      color: activa ? context.c.primario : context.c.superficie,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -514,9 +526,13 @@ class _Opcion extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: IconTheme(
-            data: IconThemeData(color: activa ? verdeClaro : verde),
+            data: IconThemeData(
+              color: activa ? context.c.acentoSobrePrimario : context.c.acento,
+            ),
             child: DefaultTextStyle.merge(
-              style: TextStyle(color: activa ? Colors.white : azulOscuro),
+              style: TextStyle(
+                color: activa ? context.c.sobrePrimario : context.c.texto,
+              ),
               child: child,
             ),
           ),
@@ -560,8 +576,8 @@ class _Teclado extends StatelessWidget {
           Material(
             key: ValueKey('tecla-$t'),
             color: t == '000' || t == borrar
-                ? const Color(0xFFE3EBFF)
-                : Colors.white,
+                ? context.c.suave
+                : context.c.superficie,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
@@ -602,7 +618,7 @@ class _BotonConfirmar extends StatelessWidget {
       child: FilledButton(
         onPressed: monto > 0 ? onConfirmar : null,
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.black,
+          backgroundColor: context.c.primario,
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
@@ -614,7 +630,7 @@ class _BotonConfirmar extends StatelessWidget {
             children: [
               TextSpan(
                 text: '(${formatoPesos(monto)})',
-                style: const TextStyle(color: verdeClaro),
+                style: TextStyle(color: context.c.acentoSobrePrimario),
               ),
             ],
           ),

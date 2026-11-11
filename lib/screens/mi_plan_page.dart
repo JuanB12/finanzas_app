@@ -141,7 +141,7 @@ class _MiPlanPageState extends State<MiPlanPage> {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF4E0),
+                color: context.c.aviso,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -154,9 +154,9 @@ class _MiPlanPageState extends State<MiPlanPage> {
                 ],
               ),
             ),
-          const Text(
+          Text(
             'Cuánto te entra, qué sale fijo y cuánto separas',
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: context.c.textoSuave),
           ),
           const _Seccion('¿Cómo te pagan?'),
           SegmentedButton<Frecuencia>(
@@ -211,11 +211,11 @@ class _MiPlanPageState extends State<MiPlanPage> {
               ],
             ],
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 6),
             child: Text(
               'Si cae fin de semana o festivo, la app cuenta el día hábil anterior.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: context.c.textoSuave),
             ),
           ),
           const _Seccion('Lo que separas apenas te pagan'),
@@ -236,21 +236,30 @@ class _MiPlanPageState extends State<MiPlanPage> {
             onCambio: (v) => setState(() => _imprevistos = v),
           ),
           const _Seccion('Gastos fijos'),
-          const Text(
+          Text(
             'Toca uno para editarlo',
-            style: TextStyle(fontSize: 12, color: Colors.black54),
+            style: TextStyle(fontSize: 12, color: context.c.textoSuave),
           ),
-          for (final f in _fijos)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              onTap: () => _editarFijo(f),
-              title: Text(f.nombre),
-              subtitle: Text(
-                '${formatoPesos(f.monto)} · ${f.diaCobro == null ? 'cada $_periodo' : 'se cobra el ${_textoDia(f.diaCobro!)}'}',
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline_rounded),
-                onPressed: () => setState(() => _fijos.remove(f)),
+          if (_fijos.isNotEmpty)
+            Material(
+              color: context.c.superficie,
+              borderRadius: BorderRadius.circular(18),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (final f in _fijos)
+                    ListTile(
+                      onTap: () => _editarFijo(f),
+                      title: Text(f.nombre),
+                      subtitle: Text(
+                        '${formatoPesos(f.monto)} · ${f.diaCobro == null ? 'cada $_periodo' : 'se cobra el ${_textoDia(f.diaCobro!)}'}',
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        onPressed: () => setState(() => _fijos.remove(f)),
+                      ),
+                    ),
+                ],
               ),
             ),
           TextButton.icon(
@@ -264,12 +273,15 @@ class _MiPlanPageState extends State<MiPlanPage> {
           if (error != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(error, style: const TextStyle(color: Colors.red)),
+              child: Text(
+                error,
+                style: TextStyle(color: context.c.textoPeligro),
+              ),
             ),
           FilledButton(
             onPressed: error != null || !_hayCambios ? null : _guardar,
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.black,
+              backgroundColor: context.c.primario,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             child: const Text('Guardar'),
@@ -357,7 +369,7 @@ class _Porcentaje extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icono, size: 20, color: verde),
+            Icon(icono, size: 20, color: context.c.acento),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -369,12 +381,16 @@ class _Porcentaje extends StatelessWidget {
             Text('$valor% · ${formatoPesos(monto)}'),
           ],
         ),
-        Slider(
-          value: valor.toDouble(),
-          max: maximo.toDouble(),
-          divisions: maximo,
-          activeColor: verde,
-          onChanged: (v) => onCambio(v.round()),
+        SliderTheme(
+          data: SliderTheme.of(context)
+              .copyWith(tickMarkShape: SliderTickMarkShape.noTickMark),
+          child: Slider(
+            value: valor.toDouble(),
+            max: maximo.toDouble(),
+            divisions: maximo,
+            activeColor: context.c.acento,
+            onChanged: (v) => onCambio(v.round()),
+          ),
         ),
       ],
     );
@@ -401,7 +417,7 @@ class _Resumen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: azulOscuro,
+        color: context.c.tarjeta,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

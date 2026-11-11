@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../datos_ejemplo.dart';
 import '../models/festivos_colombia.dart';
@@ -24,7 +24,10 @@ class Finanzas extends ChangeNotifier {
   final List<Gasto> _gastos = [];
   final List<Categoria> _categoriasPropias = [];
 
+  ThemeMode _modoTema = ThemeMode.system;
+
   String get nombre => _nombre;
+  ThemeMode get modoTema => _modoTema;
   Quincena get quincena => _quincena;
   List<Gasto> get gastos => List.unmodifiable(_gastos);
   List<Categoria> get categoriasPropias =>
@@ -38,6 +41,11 @@ class Finanzas extends ChangeNotifier {
     hoy: ahora(),
     festivos: festivos,
   );
+
+  void cambiarModoTema(ThemeMode modo) {
+    _modoTema = modo;
+    notifyListeners();
+  }
 
   void cambiarNombre(String nombre) {
     _nombre = nombre;

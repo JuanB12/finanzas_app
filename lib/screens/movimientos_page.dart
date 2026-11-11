@@ -76,7 +76,7 @@ class _MovimientosPageState extends State<MovimientosPage> {
                 hintText: 'Buscar (ej. Bruno, mercado)',
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: context.c.superficie,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
@@ -118,7 +118,7 @@ class _MovimientosPageState extends State<MovimientosPage> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Text(
                             '${filtrados.length} de ${todos.length} · ${formatoPesos(filtrados.fold(0, (s, g) => s + g.monto))}',
-                            style: const TextStyle(color: Colors.black54),
+                            style: TextStyle(color: context.c.textoSuave),
                           ),
                         ),
                       for (final grupo in grupos) ...[
@@ -136,16 +136,16 @@ class _MovimientosPageState extends State<MovimientosPage> {
                               ),
                               Text(
                                 formatoPesos(grupo.total),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: azulOscuro,
+                                  color: context.c.texto,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         Material(
-                          color: Colors.white,
+                          color: context.c.superficie,
                           borderRadius: BorderRadius.circular(20),
                           clipBehavior: Clip.antiAlias,
                           child: Column(
@@ -198,7 +198,7 @@ class _Vacio extends StatelessWidget {
         child: Text(
           hayFiltros ? 'Ningún gasto coincide con la búsqueda' : 'Todavía no has registrado gastos.\nToca "Agregar gasto" para empezar.',
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.black45),
+          style: TextStyle(color: context.c.textoTenue),
         ),
       ),
     );

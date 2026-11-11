@@ -6,9 +6,6 @@ import '../tema.dart';
 import '../utils/formato.dart';
 import '../widgets/categorias.dart';
 
-const _verdeOscuro = Color(0xFF004D34);
-const _pista = Color(0xFFE6EBF5);
-
 class AnalisisPage extends StatelessWidget {
   const AnalisisPage({super.key});
 
@@ -37,16 +34,16 @@ class AnalisisPage extends StatelessWidget {
           ),
           Text(
             '$periodo · ${fechaCorta(resumen.inicio)} al ${fechaCorta(ultimoDia)}',
-            style: const TextStyle(color: Colors.black54),
+            style: TextStyle(color: context.c.textoSuave),
           ),
           const SizedBox(height: 16),
           _Tarjeta(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Gastado hasta hoy',
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: context.c.textoSuave),
                 ),
                 Text(
                   formatoPesos(a.total),
@@ -58,7 +55,7 @@ class AnalisisPage extends StatelessWidget {
                 ),
                 Text(
                   'de ${formatoPesos(resumen.disponibleQuincena)} que tenías para gastar',
-                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  style: TextStyle(fontSize: 13, color: context.c.textoSuave),
                 ),
                 const Divider(height: 28),
                 _Dato(
@@ -77,12 +74,12 @@ class AnalisisPage extends StatelessWidget {
             ),
           ),
           if (a.total == 0)
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(32),
               child: Text(
                 'Cuando registres gastos en esta quincena, aquí vas a ver en qué se te va la plata.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black45),
+                style: TextStyle(color: context.c.textoTenue),
               ),
             )
           else ...[
@@ -119,7 +116,7 @@ class _Tarjeta extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.c.superficie,
         borderRadius: BorderRadius.circular(20),
       ),
       child: child,
@@ -157,7 +154,7 @@ class _Dato extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icono, size: 20, color: verde),
+          Icon(icono, size: 20, color: context.c.acento),
           const SizedBox(width: 8),
           Expanded(child: Text(texto)),
           Text(valor, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -182,8 +179,9 @@ class _Consejo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: azulOscuro,
+        color: context.c.tarjeta,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.c.bordeConsejo),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +220,7 @@ class _Barras extends StatelessWidget {
             child: Row(
               children: [
                 if (icono != null) ...[
-                  Icon(icono!(p.nombre), size: 20, color: azulOscuro),
+                  Icon(icono!(p.nombre), size: 20, color: context.c.texto),
                   const SizedBox(width: 10),
                 ],
                 Expanded(
@@ -249,7 +247,7 @@ class _Barras extends StatelessWidget {
                             child: Text(
                               '${p.porcentaje}%',
                               textAlign: TextAlign.right,
-                              style: const TextStyle(color: Colors.black54),
+                              style: TextStyle(color: context.c.textoSuave),
                             ),
                           ),
                         ],
@@ -259,10 +257,13 @@ class _Barras extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: Stack(
                           children: [
-                            Container(height: 8, color: _pista),
+                            Container(height: 8, color: context.c.pista),
                             FractionallySizedBox(
                               widthFactor: p.monto / maximo,
-                              child: Container(height: 8, color: verde),
+                              child: Container(
+                                height: 8,
+                                color: context.c.acento,
+                              ),
                             ),
                           ],
                         ),
@@ -306,9 +307,9 @@ class _GraficoDiasState extends State<_GraficoDias> {
           '${nombreDelDia(elegido.dia, widget.hoy)} · ${formatoPesos(elegido.monto)}',
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
-        const Text(
+        Text(
           'Toca una barra para ver ese día',
-          style: TextStyle(fontSize: 12, color: Colors.black45),
+          style: TextStyle(fontSize: 12, color: context.c.textoTenue),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -330,10 +331,10 @@ class _GraficoDiasState extends State<_GraficoDias> {
                             : (d.monto / maximo * alto).clamp(4, alto),
                         decoration: BoxDecoration(
                           color: d.monto == 0
-                              ? _pista
+                              ? context.c.pista
                               : i == _elegido
-                              ? _verdeOscuro
-                              : verde,
+                              ? context.c.barraElegida
+                              : context.c.acento,
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(4),
                           ),
@@ -350,12 +351,12 @@ class _GraficoDiasState extends State<_GraficoDias> {
           children: [
             Text(
               fechaCorta(dias.first.dia),
-              style: const TextStyle(fontSize: 12, color: Colors.black45),
+              style: TextStyle(fontSize: 12, color: context.c.textoTenue),
             ),
             const Spacer(),
             Text(
               nombreDelDia(dias.last.dia, widget.hoy),
-              style: const TextStyle(fontSize: 12, color: Colors.black45),
+              style: TextStyle(fontSize: 12, color: context.c.textoTenue),
             ),
           ],
         ),
